@@ -15,6 +15,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.9.1",
     "drizzle-kit": "^0.31.5",
+    "esbuild": "^0.25.11",
     "tsx": "^4.20.6"
   },
   "dependencies": {

@@ -195,9 +195,14 @@ async function downloadAndExtractNode(options) {
   }
 }
 
-downloadAndExtractNode({
-  version: 'v25.0.0',
-  // platform: '',  // 可选：'win32', 'darwin', 'linux', 'aix'
-  // arch: 'x64',        // 可选：'x64', 'arm64', 'ppc64', 'ppc64le', 's390x'
-  outputDir: join(__dirname, '../node-bin')
-}).catch(console.error);
+try {
+  await downloadAndExtractNode({
+    version: 'v25.0.0',
+    platform: 'darwin',  // 可选：'win32', 'darwin', 'linux', 'aix'
+    // arch: 'x64',        // 可选：'x64', 'arm64', 'ppc64', 'ppc64le', 's390x'
+    outputDir: join(__dirname, '../node-bin')
+  }).catch(console.error);
+} catch (error) {
+  console.error('Error:', error.message);
+  process.exit(1);
+}
