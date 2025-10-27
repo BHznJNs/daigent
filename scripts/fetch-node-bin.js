@@ -1,5 +1,4 @@
 import { createWriteStream, promises as fs } from 'node:fs';
-import { pipeline } from 'node:stream/promises';
 import { createGunzip } from 'node:zlib';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,7 +6,6 @@ import https from 'node:https';
 import tar from 'tar';
 import AdmZip from 'adm-zip';
 
-const { Extract } = tar;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -101,27 +99,18 @@ async function downloadFile(url, destination) {
  */
 async function extractTarGz(archivePath, outputDir, executableName) {
   console.log('Extracting tar.gz archive...');
-  
-  const readStream = (await fs.open(archivePath, 'r')).createReadStream();
-  const gunzip = createGunzip();
-  
-  return new Promise((resolve, reject) => {
-    const extract = new Extract({
-      cwd: outputDir,
-      filter: (path) => {
-        // 只提取 bin/node 文件
-        return path.includes(`/bin/${executableName}`) || path.includes(`\\bin\\${executableName}`);
-      },
-      onentry: (entry) => {
-        console.log(`Extracting: ${entry.path}`);
-      }
-    });
-    
-    extract.on('finish', resolve);
-    extract.on('error', reject);
-    
-    readStream.pipe(gunzip).pipe(extract);
+
+  await tar.x({
+    cwd: outputDir,
+    file: archivePath,
+    filter: (path) => {
+      // 只提取 bin/node 文件
+      return path.endsWith(`bin/${executableName}`)
+    },
+    strip: 2,
+    onentry: (entry) => console.log(`Extracting: ${entry.path}`)
   });
+  return join(outputDir, executableName);
 }
 
 /**
@@ -185,29 +174,7 @@ async function downloadAndExtractNode(options) {
     if (filename.endsWith('.zip')) {
       finalPath = await extractZip(archivePath, outputDir, executableName);
     } else if (filename.endsWith('.tar.gz')) {
-      await extractTarGz(archivePath, outputDir, executableName);
-      
-      // 查找提取的可执行文件
-      const files = await fs.readdir(outputDir, { recursive: true });
-      const nodeBinary = files.find(f => f.includes(executableName));
-      
-      if (nodeBinary) {
-        finalPath = join(outputDir, executableName);
-        const extractedPath = join(outputDir, nodeBinary);
-        
-        // 移动到输出目录根目录
-        if (extractedPath !== finalPath) {
-          await fs.rename(extractedPath, finalPath);
-          
-          // 删除空目录
-          const dirToRemove = dirname(extractedPath);
-          if (dirToRemove !== outputDir) {
-            await fs.rm(dirToRemove, { recursive: true, force: true });
-          }
-        }
-      } else {
-        throw new Error('Node executable not found after extraction');
-      }
+      finalPath = await extractTarGz(archivePath, outputDir, executableName);
     }
     
     // 删除压缩包
@@ -230,7 +197,7 @@ async function downloadAndExtractNode(options) {
 
 downloadAndExtractNode({
   version: 'v25.0.0',
-  // platform: 'linux',  // 可选：'win32', 'darwin', 'linux', 'aix'
+  // platform: '',  // 可选：'win32', 'darwin', 'linux', 'aix'
   // arch: 'x64',        // 可选：'x64', 'arm64', 'ppc64', 'ppc64le', 's390x'
   outputDir: join(__dirname, '../node-bin')
 }).catch(console.error);
