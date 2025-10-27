@@ -198,7 +198,7 @@ async function downloadAndExtractNode(options) {
 try {
   await downloadAndExtractNode({
     version: 'v25.0.0',
-    platform: 'darwin',  // 可选：'win32', 'darwin', 'linux', 'aix'
+    // platform: 'darwin',  // 可选：'win32', 'darwin', 'linux', 'aix'
     // arch: 'x64',        // 可选：'x64', 'arm64', 'ppc64', 'ppc64le', 's390x'
     outputDir: join(__dirname, '../node-bin')
   }).catch(console.error);
