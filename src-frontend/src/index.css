@@ -1,13 +1,14 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "@/styles/react-tabs.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 body {
   -webkit-user-select: none; /* Safari */
-  -moz-user-select: none;    /* Firefox */
-  -ms-user-select: none;     /* IE10+/Edge */
-  user-select: none;         /* Standard */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
 }
 
 .selectable-text {
@@ -17,7 +18,8 @@ body {
   user-select: text;
 }
 
-input, textarea {
+input,
+textarea {
   -webkit-user-select: auto;
   -moz-user-select: auto;
   -ms-user-select: auto;

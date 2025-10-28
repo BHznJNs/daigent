@@ -13,9 +13,11 @@
     "tauri": "tauri"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.3.0",
     "@tauri-apps/cli": "^2",
     "adm-zip": "^0.5.16",
     "npm-run-all": "^4.1.5",
-    "tar": "^6.2.1"
+    "tar": "^6.2.1",
+    "ultracite": "6.0.4"
   }
 }
