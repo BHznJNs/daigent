@@ -10,6 +10,46 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
+ * 解析命令行参数
+ * @returns {Object} 解析后的参数对象
+ */
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const options = {
+    version: 'v25.0.0',
+    platform: undefined,
+    arch: undefined,
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    
+    switch (arg) {
+      case '--version':
+      case '-v':
+        options.version = args[++i];
+        break;
+      case '--platform':
+      case '-p':
+        options.platform = args[++i];
+        break;
+      case '--arch':
+      case '-a':
+        options.arch = args[++i];
+        break;
+      default:
+        if (arg.startsWith('--')) {
+          console.error(`Unknown option: ${arg}`);
+          process.exit(1);
+        }
+        break;
+    }
+  }
+
+  return options;
+}
+
+/**
  * 根据平台和架构获取下载 URL
  * @param {string} version - Node.js 版本，如 'v25.0.0'
  * @param {string} platform - 操作系统：'win32', 'darwin', 'linux', 'aix'
@@ -195,11 +235,14 @@ async function downloadAndExtractNode(options) {
   }
 }
 
+
+const options = parseArgs();
 try {
   await downloadAndExtractNode({
-    version: 'v25.0.0',
+    // version: 'v25.0.0',
     // platform: 'darwin',  // 可选：'win32', 'darwin', 'linux', 'aix'
     // arch: 'x64',        // 可选：'x64', 'arm64', 'ppc64', 'ppc64le', 's390x'
+    ...options,
     outputDir: join(__dirname, '../node-bin')
   }).catch(console.error);
 } catch (error) {

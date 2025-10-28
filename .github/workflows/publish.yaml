@@ -57,7 +57,14 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install # change this to npm, pnpm or bun depending on which one you use.
 
-      - name: download node binary
+      - name: download node binary (macos x64 only)
+        if: ${{ matrix.platform == 'macos-latest' && matrix.args == '--target x86_64-apple-darwin' }}
+        run: |
+          node scripts/fetch-node-bin.js --arch x64
+          node scripts/rename-node-bin.js --target x86_64-apple-darwin
+      
+      - name: download node binary (other platforms)
+        if: ${{ matrix.platform != 'macos-latest' || matrix.args != '--target x86_64-apple-darwin' }}
         run: |
           node scripts/fetch-node-bin.js
           node scripts/rename-node-bin.js
