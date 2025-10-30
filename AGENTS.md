@@ -1,3 +1,11 @@
+---
+name: "Daigent"
+description: "一个通用的 LLM Agent 桌面客户端"
+author: "BHznJNs"
+authorUrl: "https://github.com/BHznJNs"
+tags: ["desktop", "LLM", "agent"]
+---
+
 ## 技术栈
 
 前端和后端的 Node.js Sidecar 统一使用 TypeScript 编写

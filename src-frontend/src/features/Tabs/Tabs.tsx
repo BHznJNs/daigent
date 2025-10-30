@@ -7,6 +7,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import {
   arrayMove,
   rectSortingStrategy,
@@ -63,7 +64,7 @@ function SortableTab({ tab }: { tab: Tab }) {
           "group flex min-w-24 shrink-0 cursor-pointer items-center justify-between gap-2 border-r border-b py-2 pr-2 pl-4 text-muted-foreground text-sm outline-0 transition-colors duration-200 ease-in-out",
           "hover:bg-muted/40 hover:text-primary",
           {
-            "!bg-muted !text-primary border-b-transparent":
+            "border-b-transparent bg-muted! text-primary!":
               tab.id === activeTabId,
           }
         )}
@@ -76,11 +77,14 @@ function SortableTab({ tab }: { tab: Tab }) {
             { "opacity-100": tab.id === activeTabId }
           )}
           onClick={(e) => handleTabClose(e, tab.id)}
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
         />
       </ReactTab>
     </div>
   );
 }
+SortableTab.tabsRole = "Tab";
 
 export function Tabs() {
   const { tabs, activeTabId, setActiveTab, setTabs } = useTabsStore();
@@ -141,6 +145,7 @@ export function Tabs() {
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
+      modifiers={[restrictToHorizontalAxis]}
     >
       <ReactTabs
         selectedIndex={activeIndex}
@@ -159,7 +164,7 @@ export function Tabs() {
               ))}
             </ReactTabList>
           </SortableContext>
-          <ScrollBar orientation="horizontal" />
+          <ScrollBar className="h-1.5" orientation="horizontal" />
         </ScrollArea>
 
         <div className="grow overflow-y-auto">

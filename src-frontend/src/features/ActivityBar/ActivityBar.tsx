@@ -1,9 +1,9 @@
 import {
+  BlocksIcon,
   BotMessageSquareIcon,
+  FoldersIcon,
   LayoutListIcon,
-  PlugIcon,
   SettingsIcon,
-  UsersIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,7 @@ const topViews: { id: View; title: string; icon: React.ReactNode }[] = [
   {
     id: "workspaces",
     title: "Workspaces",
-    icon: <UsersIcon />,
+    icon: <FoldersIcon />,
   },
   {
     id: "agents",
@@ -33,7 +33,7 @@ const topViews: { id: View; title: string; icon: React.ReactNode }[] = [
   {
     id: "plugins",
     title: "Plugins",
-    icon: <PlugIcon />,
+    icon: <BlocksIcon />,
   },
 ];
 
@@ -70,8 +70,14 @@ function ActivityBarItem({ id, icon, ...props }: ActivityBarItemProps) {
 }
 
 export function ActivityBar() {
+  const { isOpen } = useSidebarStore();
   return (
-    <div className="flex flex-col justify-between border-r bg-card">
+    <div
+      className={cn(
+        "flex flex-col justify-between bg-card",
+        isOpen && "border-r"
+      )}
+    >
       <div className="flex flex-col items-center">
         {topViews.map(({ id, title, icon }) => (
           <Tooltip key={id} delayDuration={600}>
