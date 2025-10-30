@@ -13,7 +13,7 @@ fn create_init_script(vars: HashMap<&str, String>) -> String {
     .join(",\n");
   format!(
     r#"
-        console.log("Successfully injected InputShare variables");
+        console.log("Successfully injected tauri variables");
         window.__INJECTED__ = {{
             {}
         }};

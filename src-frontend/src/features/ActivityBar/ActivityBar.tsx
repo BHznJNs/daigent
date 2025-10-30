@@ -18,22 +18,22 @@ const topViews: { id: View; title: string; icon: React.ReactNode }[] = [
   {
     id: "tasks",
     title: "Tasks",
-    icon: <LayoutListIcon className="size-5" />,
+    icon: <LayoutListIcon />,
   },
   {
     id: "workspaces",
     title: "Workspaces",
-    icon: <UsersIcon className="size-5" />,
+    icon: <UsersIcon />,
   },
   {
     id: "agents",
     title: "Agents",
-    icon: <BotMessageSquareIcon className="size-5" />,
+    icon: <BotMessageSquareIcon />,
   },
   {
     id: "plugins",
     title: "Plugins",
-    icon: <PlugIcon className="size-5" />,
+    icon: <PlugIcon />,
   },
 ];
 
@@ -41,30 +41,42 @@ const bottomViews: { id: View; title: string; icon: React.ReactNode }[] = [
   {
     id: "settings",
     title: "Settings",
-    icon: <SettingsIcon className="size-5" />,
+    icon: <SettingsIcon />,
   },
 ];
 
-export function ActivityBar() {
+type ActivityBarItemProps = {
+  id: View;
+  icon: React.ReactNode;
+} & React.ComponentProps<typeof Button>;
+
+function ActivityBarItem({ id, icon, ...props }: ActivityBarItemProps) {
   const { activeView, toggleSidebar } = useSidebarStore();
 
   return (
-    <div className="flex flex-col justify-between border-r bg-card p-2">
-      <div className="flex flex-col items-center gap-2">
+    <Button
+      {...props}
+      variant="ghost"
+      size="icon"
+      className={cn(
+        "size-12 rounded-none border-transparent border-r-2 border-l-2 p-4 opacity-40 hover:opacity-100 [&_svg]:size-6!",
+        activeView === id && "border-l-primary opacity-100"
+      )}
+      onClick={() => toggleSidebar(id)}
+    >
+      {icon}
+    </Button>
+  );
+}
+
+export function ActivityBar() {
+  return (
+    <div className="flex flex-col justify-between border-r bg-card">
+      <div className="flex flex-col items-center">
         {topViews.map(({ id, title, icon }) => (
-          <Tooltip key={id} delayDuration={700}>
+          <Tooltip key={id} delayDuration={600}>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "rounded-lg",
-                  activeView === id && "bg-muted text-foreground"
-                )}
-                onClick={() => toggleSidebar(id)}
-              >
-                {icon}
-              </Button>
+              <ActivityBarItem id={id} icon={icon} />
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={5}>
               {title}
@@ -76,17 +88,7 @@ export function ActivityBar() {
         {bottomViews.map(({ id, title, icon }) => (
           <Tooltip key={id}>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "rounded-lg",
-                  activeView === id && "bg-muted text-foreground"
-                )}
-                onClick={() => toggleSidebar(id)}
-              >
-                {icon}
-              </Button>
+              <ActivityBarItem id={id} icon={icon} />
             </TooltipTrigger>
             <TooltipContent side="right" sideOffset={5}>
               {title}

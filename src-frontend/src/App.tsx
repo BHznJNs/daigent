@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { Panel } from "react-resizable-panels";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -9,16 +10,16 @@ import { applyTheme } from "@/utils/applyTheme";
 import { ActivityBar } from "./features/ActivityBar/ActivityBar";
 import { SideBar } from "./features/SideBar/SideBar";
 import { Tabs } from "./features/Tabs/Tabs";
+import { cn } from "./lib/utils";
 import { useSidebarStore } from "./stores/sidebar-store";
 import { useTabsStore } from "./stores/tabs-store";
 
 function Layout() {
+  const DEFAULT_SIDEBAR_SIZE = 30;
   const { addTab } = useTabsStore();
-  const { isOpen } = useSidebarStore();
-
-  const SIDEBAR_MIN_SIZE = 20;
-  const SIDEBAR_MAX_SIZE = 75;
-  const SIDEBAR_DEFAULT_SIZE = 25;
+  const { isOpen, openSidebar, closeSidebar } = useSidebarStore();
+  const [isDragging, setIsDragging] = useState(false);
+  const sideBarPanelRef = useRef<React.ElementRef<typeof Panel>>(null);
 
   useEffect(() => {
     for (let i = 1; i <= 10; i++) {
@@ -26,20 +27,35 @@ function Layout() {
     }
   }, [addTab]);
 
+  useEffect(() => {
+    if (isOpen) {
+      sideBarPanelRef.current?.expand();
+    } else {
+      sideBarPanelRef.current?.collapse();
+    }
+  }, [isOpen]);
+
   return (
     <div className="flex h-full">
       <ActivityBar />
       <ResizablePanelGroup direction="horizontal" className="h-full">
         <ResizablePanel
-          defaultSize={SIDEBAR_DEFAULT_SIZE}
-          minSize={isOpen ? SIDEBAR_MIN_SIZE : 0}
-          maxSize={isOpen ? SIDEBAR_MAX_SIZE : 0}
-          className="transition-all duration-300 ease-in-out"
+          ref={sideBarPanelRef}
+          defaultSize={isOpen ? DEFAULT_SIDEBAR_SIZE : 0}
+          minSize={20}
+          maxSize={80}
+          collapsible={true}
+          collapsedSize={0}
+          className={cn(
+            !isDragging && "transition-all duration-300 ease-in-out"
+          )}
+          onCollapse={closeSidebar}
+          onExpand={openSidebar}
         >
           <SideBar />
         </ResizablePanel>
-        <ResizableHandle />
-        <ResizablePanel defaultSize={75} minSize={25}>
+        <ResizableHandle onDragging={setIsDragging} />
+        <ResizablePanel defaultSize={70} minSize={20}>
           <Tabs />
         </ResizablePanel>
       </ResizablePanelGroup>

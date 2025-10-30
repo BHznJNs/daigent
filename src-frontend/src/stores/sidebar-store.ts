@@ -8,24 +8,31 @@ type SidebarState = {
 };
 
 type SidebarActions = {
-  toggleSidebar: (view: View) => void;
+  openSidebar: (view?: View) => void;
   closeSidebar: () => void;
+  toggleSidebar: (view?: View) => void;
 };
 
 type SidebarStore = SidebarState & SidebarActions;
 
+const DEFAULT_VIEW: View = "tasks";
+
 export const useSidebarStore = create<SidebarStore>((set, get) => ({
   isOpen: false,
   activeView: null,
-  toggleSidebar: (view: View) => {
+  toggleSidebar: (view: View | null = null) => {
     const { isOpen, activeView } = get();
-    if (isOpen && activeView === view) {
-      set({ isOpen: false, activeView: null });
-    } else {
+    if (activeView !== null && view !== null && view !== activeView) {
       set({ isOpen: true, activeView: view });
+      return;
     }
+    set({ isOpen: !isOpen, activeView: view ?? activeView ?? DEFAULT_VIEW });
+  },
+  openSidebar: (view: View | null = null) => {
+    const { activeView } = get();
+    set({ isOpen: true, activeView: view ?? activeView ?? DEFAULT_VIEW });
   },
   closeSidebar: () => {
-    set({ isOpen: false, activeView: null });
+    set({ isOpen: false });
   },
 }));
