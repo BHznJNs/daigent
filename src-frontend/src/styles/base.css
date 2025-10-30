@@ -1,0 +1,9 @@
+#root {
+  height: 100vh;
+  overflow: hidden;
+}
+
+html,
+body {
+  overscroll-behavior: none;
+}
