@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts --port 1450",
-    "bundle": "npx esbuild src/index.ts --bundle --platform=node --outfile=../src-tauri/bin/server.js"
+    "bundle": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=../src-tauri/bin/server.mjs"
   },
   "keywords": [],
   "author": "",
@@ -13,15 +13,18 @@
   "packageManager": "pnpm@10.13.1",
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
+    "@types/minimist": "^1.2.5",
     "@types/node": "^24.9.1",
     "drizzle-kit": "^0.31.5",
     "esbuild": "^0.25.11",
     "tsx": "^4.20.6"
   },
   "dependencies": {
+    "@fastify/cors": "^11.1.0",
     "ai": "^5.0.78",
     "better-sqlite3": "^12.4.1",
     "drizzle-orm": "^0.44.7",
-    "fastify": "^5.6.1"
+    "fastify": "^5.6.1",
+    "minimist": "^1.2.8"
   }
 }
