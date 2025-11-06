@@ -51,7 +51,7 @@ type ActivityBarItemProps = {
 } & React.ComponentProps<typeof Button>;
 
 function ActivityBarItem({ id, icon, ...props }: ActivityBarItemProps) {
-  const { activeView, toggleSidebar } = useSidebarStore();
+  const { activeView, isOpen, toggleSidebar } = useSidebarStore();
 
   return (
     <Button
@@ -60,7 +60,7 @@ function ActivityBarItem({ id, icon, ...props }: ActivityBarItemProps) {
       size="icon"
       className={cn(
         "size-12 rounded-none border-transparent border-r-2 border-l-2 p-4 opacity-40 hover:opacity-100 [&_svg]:size-6!",
-        activeView === id && "border-l-primary opacity-100"
+        activeView === id && isOpen && "border-l-primary opacity-100"
       )}
       onClick={() => toggleSidebar(id)}
     >
