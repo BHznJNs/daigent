@@ -5,6 +5,19 @@ import { SideBarHeader } from "../../SideBar";
 import { GeneralSettings } from "./GeneralSettings";
 
 export function SettingsView() {
+  const settingItems = [
+    {
+      id: "general",
+      title: "通用",
+      content: <GeneralSettings />,
+    },
+    {
+      id: "test",
+      title: "测试",
+      content: <div>测试</div>,
+    },
+  ];
+
   const tabsTriggerClasses = cn(
     "!text-foreground !bg-transparent !border-transparent",
     "flex-0 cursor-pointer justify-start rounded-none border-0 border-r-2 border-l-2 px-3 py-1 opacity-40 transition-all first-of-type:pt-2 hover:opacity-100",
@@ -14,23 +27,28 @@ export function SettingsView() {
     <>
       <SideBarHeader title="设置" actions={[]} />
       <Tabs
-        defaultValue="general"
+        defaultValue={settingItems[0].id}
         className="flex h-full w-full flex-row gap-0"
       >
         <TabsList className="flex h-full flex-col items-stretch gap-2 rounded-none border-r bg-transparent p-0">
-          <TabsTrigger value="general" className={tabsTriggerClasses}>
-            通用
-          </TabsTrigger>
-          <TabsTrigger value="test" className={tabsTriggerClasses}>
-            测试
-          </TabsTrigger>
+          {settingItems.map((item) => (
+            <TabsTrigger
+              key={item.id}
+              value={item.id}
+              className={tabsTriggerClasses}
+            >
+              {item.title}
+            </TabsTrigger>
+          ))}
           <div className="flex-1" />
         </TabsList>
 
         <ScrollArea className="max-h-full flex-1 px-4 py-2">
-          <TabsContent value="general">
-            <GeneralSettings />
-          </TabsContent>
+          {settingItems.map((item) => (
+            <TabsContent key={item.id} value={item.id}>
+              {item.content}
+            </TabsContent>
+          ))}
         </ScrollArea>
       </Tabs>
     </>
