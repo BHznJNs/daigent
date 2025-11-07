@@ -24,7 +24,9 @@ export function SettingItem({
       className={cn("flex items-center justify-between py-2 pr-1.5", className)}
     >
       <div className="space-y-1 pr-4">
-        <div className={cn("leading-none", titleClassName)}>{title}</div>
+        <div className={cn("whitespace-nowrap leading-none", titleClassName)}>
+          {title}
+        </div>
         {description && (
           <div
             className={cn(

@@ -15,7 +15,7 @@ import { useSidebarStore } from "./stores/sidebar-store";
 import { useTabsStore } from "./stores/tabs-store";
 
 function Layout() {
-  const DEFAULT_SIDEBAR_SIZE = 30;
+  const DEFAULT_SIDEBAR_SIZE = 40;
   const { addTab } = useTabsStore();
   const { isOpen, openSidebar, closeSidebar } = useSidebarStore();
   const [isDragging, setIsDragging] = useState(false);
@@ -55,7 +55,7 @@ function Layout() {
           <SideBar />
         </ResizablePanel>
         <ResizableHandle onDragging={setIsDragging} />
-        <ResizablePanel defaultSize={70} minSize={20}>
+        <ResizablePanel defaultSize={60} minSize={20}>
           <Tabs />
         </ResizablePanel>
       </ResizablePanelGroup>
