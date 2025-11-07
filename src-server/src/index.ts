@@ -1,6 +1,7 @@
 import cors from "@fastify/cors";
 import Fastify from "fastify";
 import minimist from "minimist";
+import settingsRoute from "./routes/settings";
 
 async function main(args: minimist.ParsedArgs) {
   const port = Number.parseInt(args.port, 10);
@@ -9,10 +10,7 @@ async function main(args: minimist.ParsedArgs) {
   });
 
   await fastify.register(cors);
-
-  fastify.get("/", function handler(_request, reply) {
-    reply.send({ hello: "world" });
-  });
+  await fastify.register(settingsRoute, { prefix: "/api/settings" });
 
   try {
     await fastify.listen({ port });
