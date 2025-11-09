@@ -42,7 +42,7 @@ function Layout() {
         <ResizablePanel
           ref={sideBarPanelRef}
           defaultSize={isOpen ? DEFAULT_SIDEBAR_SIZE : 0}
-          minSize={25}
+          minSize={30}
           maxSize={80}
           collapsible={true}
           collapsedSize={0}
