@@ -8,7 +8,9 @@ tags: ["desktop", "LLM", "agent"]
 
 ## 技术栈
 
-前端和后端的 Node.js Sidecar 统一使用 TypeScript 编写
+### 项目组织
+
+这个项目使用 Tauri v2 构建，使用额外的 Python 子项目作为 Sidecar。
 
 ### 前端部分
 
@@ -16,11 +18,9 @@ tags: ["desktop", "LLM", "agent"]
 样式：TailwindCSS
 组件库：Shadcn-ui + Vercel AI Elements
 
-### Node.js Sidecar
+### Python Sidecar
 
-后端框架：fastify
-数据库及 ORM：sqlite + drizzle
-LLM API 请求：Vercel AI SDK
+后端框架：flask
 
 ## 开发指南
 
@@ -32,17 +32,34 @@ LLM API 请求：Vercel AI SDK
 
 ### 代码风格
 
-#### 前后端 TypeScript 代码风格
+#### 前后端共用代码风格
 
 - 字符串统一使用双引号
 
 #### 前端代码风格
 
+- **类型**: 使用 TypeScript 编写，禁止使用 any
 - **样式规范**: 使用 TailwindCSS 类名，禁止写 css 文件
 - **页面路由**: 在 `frontend/src/pages/` 新增组件即自动成为路由
 - **组件编写**: 统一使用 `function Component(props: Props) {}` 格式编写
   - **图标组件使用**: 统一使用 lucide-react 库提供的图标组件，且使用时需要带 `Icon` 后缀。（例如，使用 `Plus` 图标应该导入 `PlusIcon`）
 - **错误处理**: 在出现错误时统一使用 toast 组件展示
+
+#### 后端代码风格
+
+- **导入语句**: 遵循 Python 最佳实践
+  - 导入顺序：标准库 -> 第三方库 -> 本地应用/库导入
+  - 对于每个包的导入应该独占一行（使用 `\` 符号换行除外）
+  - 应该避免使用通配符导入（from module import *）
+  - 如果在一个 Python 模块中使用了一个包的多个导出，应使用“from ... import ...”；如果仅使用一个包的一个引用，则使用 "import ..."
+- **错误处理**:
+  - 禁止使用 bool 值或 None 来表示出错
+  - 在需要时定义自定义错误类型来明确错误原因
+  - 在 API 路由处将错误转换为错误代码，供前端转换为用户易懂的错误原因
+  - 在直接忽略错误时，必须给出解释说明
+  - 错误日志应该仅出现在 except 块中，即实际处理错误的块中，raise 语句处禁止打错误日志
+
+### 注意事项
 
 #### UI 风格细节
 
@@ -50,8 +67,6 @@ LLM API 请求：Vercel AI SDK
 - **设置界面设置项标题英文文本的大小写**：使用“句子大小写”
 - **对话框 (dialog) 组件标题英文文本的大小写**：使用“句子大小写”
 - **Label 组件英文文本的大小写**：使用“句子大小写”
-
-### 注意事项
 
 #### 前端部分
 
@@ -67,7 +82,7 @@ LLM API 请求：Vercel AI SDK
 如果遇到 CSS 类顺序错误请直接忽略。用户会在开发完成后一并解决。
 如果遇到 `components/ui` 中的组件报错，请忽略。
 
-### Biome 代码规范
+#### 前端 Biome 代码规范
 
 Avoid `accessKey` attr and distracting els
 No `aria-hidden="true"` on focusable els

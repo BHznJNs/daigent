@@ -7,7 +7,7 @@
     "dev:frontend": "pnpm --filter src-frontend run dev",
     "build:frontend": "pnpm --filter src-frontend run build",
     "dev:server": "pnpm --filter src-server run dev",
-    "build:server": "pnpm --filter src-server run bundle",
+    "build:server": "pnpm --filter src-server run build && python scripts/rename_python_sidecar.py",
     "dev:all": "run-p dev:frontend dev:server",
     "dev": "tauri dev -- -- --dev",
     "tauri": "tauri"
@@ -15,9 +15,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.3.4",
     "@tauri-apps/cli": "^2",
-    "adm-zip": "^0.5.16",
     "npm-run-all": "^4.1.5",
-    "tar": "^6.2.1",
     "ultracite": "6.3.0"
   }
 }

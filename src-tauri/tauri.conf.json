@@ -31,7 +31,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": ["./bin/*.js"],
-    "externalBin": ["./bin/node_runtime"]
+    "resources": ["./_internal/"],
+    "externalBin": ["./bin/server"]
   }
 }

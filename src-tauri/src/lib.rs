@@ -9,9 +9,9 @@ pub use utils::Args;
 fn start_sidecar(app: tauri::AppHandle, server_port: u16) -> Result<(), String> {
   let mut child = app
     .shell()
-    .sidecar("node_runtime")
+    .sidecar("server")
     .expect("Failed to get sidecar")
-    .args(["bin/server.mjs", "--port", &server_port.to_string()])
+    .args(["--port", &server_port.to_string()])
     .spawn()
     .expect("Failed to spawn sidecar");
 
@@ -39,7 +39,12 @@ fn start_sidecar(app: tauri::AppHandle, server_port: u16) -> Result<(), String> 
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run(args: Args) {
-  let server_port = utils::get_available_tcp_port().expect("Failed to get available port");
+  const DEV_PORT: u16 = 1460;
+  let server_port = if args.dev {
+    DEV_PORT
+  } else {
+    utils::get_available_tcp_port().expect("Failed to get available port")
+  };
 
   tauri::Builder::default()
     .plugin(tauri_plugin_opener::init())
