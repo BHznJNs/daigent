@@ -1,6 +1,11 @@
+alembic==1.17.1
 flask==3.1.2
 flask-cors==6.0.1
-waitress==3.0.2
-pyinstaller=6.16.0
 loguru==0.7.3
+platformdirs==4.5.0
+pyinstaller==6.16.0
+pydantic==2.12.4
+pydantic-ai==1.14.0
+waitress==3.0.2
 watchdog==6.0.0
+sqlalchemy==2.0.44
