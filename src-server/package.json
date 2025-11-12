@@ -3,6 +3,7 @@
   "scripts": {
     "build": "pyinstaller src/main.py",
     "dev": "watchmedo auto-restart --patterns=\"*.py;*.html;*.css\" --recursive -- python  src/main.py",
+    "alembic-generate": "alembic upgrade head && alembic revision --autogenerate",
     "install-deps": "pip install -r requirements.txt"
   }
 }

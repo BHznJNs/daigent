@@ -3,7 +3,7 @@ import dataclasses
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from . import Base
-
+from .utils import DataClassJSON
 class ProviderType(enum.Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
@@ -20,7 +20,7 @@ class LlmModel(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
     context_size: Mapped[int]
-    capability: Mapped[Capability]
+    capability: Mapped[Capability] = mapped_column(DataClassJSON(Capability))
     provider_id: Mapped[int] = mapped_column(ForeignKey("providers.id"))
     provider = relationship("Provider", back_populates="models")
 

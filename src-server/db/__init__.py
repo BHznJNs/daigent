@@ -2,7 +2,7 @@ from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from platformdirs import user_data_dir
-import models
+from . import models
 
 APP_NAME = "org.daigent.desktop"
 

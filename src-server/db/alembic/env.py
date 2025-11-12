@@ -16,8 +16,11 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from ..models import Base
-from ..models import *
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+from db.models import Base
+from db.models import *
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -25,6 +28,45 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+
+from db.models.utils import DataClassJSON, DataclassListJSON
+
+def render_item(type_, obj, autogen_context):
+    # --- 为 DataClassJSON 类型提供渲染规则 ---
+    if type_ == 'type' and isinstance(obj, DataClassJSON):
+        # 从类型实例中获取它关联的 dataclass
+        dataclass_type = obj.dataclass_type
+        
+        # 添加自定义类型本身的 import
+        autogen_context.imports.add("from db.models.utils import DataClassJSON")
+        
+        # 添加关联的 dataclass 的 import
+        # obj.dataclass_type.__module__ 获取模块名，.__name__ 获取类名
+        autogen_context.imports.add(
+            f"from {dataclass_type.__module__} import {dataclass_type.__name__}"
+        )
+        
+        # 返回一个带有参数的、完整的构造函数调用字符串
+        return f"DataClassJSON({dataclass_type.__name__})"
+
+    # --- 为 DataclassListJSON 类型提供渲染规则 ---
+    if type_ == 'type' and isinstance(obj, DataclassListJSON):
+        # 同样地，获取关联的 dataclass
+        dataclass_type = obj.dataclass_type
+
+        # 添加自定义类型本身的 import
+        autogen_context.imports.add("from db.models.utils import DataclassListJSON")
+        
+        # 添加关联的 dataclass 的 import
+        autogen_context.imports.add(
+            f"from {dataclass_type.__module__} import {dataclass_type.__name__}"
+        )
+
+        # 返回正确的构造函数调用
+        return f"DataclassListJSON({dataclass_type.__name__})"
+
+    # 对于所有其他情况，返回 False 让 Alembic 使用默认的渲染逻辑
+    return False
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -65,7 +107,9 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            render_item=render_item,
         )
 
         with context.begin_transaction():
