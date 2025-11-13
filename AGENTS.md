@@ -16,11 +16,21 @@ tags: ["desktop", "LLM", "agent"]
 
 前端框架：React 19
 样式：TailwindCSS
+状态管理：zustand
 组件库：Shadcn-ui + Vercel AI Elements
 
 ### Python Sidecar
 
 后端框架：flask
+数据库：sqlite
+ORM：SQLAlchemy + Alembic
+
+## 关键技术点实现
+
+### 数据持久化
+
+仅前端使用的数据直接使用 zustand 的 persist 存储在 localStorage 中。
+对于前后端共享数据，如工作区设置、Agent 配置、用户会话数据等，通过后端存储在 sqlite 数据库中。
 
 ## 开发指南
 
@@ -47,6 +57,9 @@ tags: ["desktop", "LLM", "agent"]
 
 #### 后端代码风格
 
+- **类型定义**:
+  - 不应该使用 `Option[T]`, `Union[A, B]`, `List[T]`, `Dict[T]` 等过时的类型标注写法
+  - 应该使用 `T | None`, `A | B`, `list[T]`, `dict[T]` 等更现代的写法
 - **导入语句**: 遵循 Python 最佳实践
   - 导入顺序：标准库 -> 第三方库 -> 本地应用/库导入
   - 对于每个包的导入应该独占一行（使用 `\` 符号换行除外）
