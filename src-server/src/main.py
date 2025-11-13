@@ -1,7 +1,7 @@
 import argparse
 from loguru import logger
 from waitress import serve
-from app import App
+from .app import App
 
 def main():
     parser = argparse.ArgumentParser()
@@ -11,6 +11,3 @@ def main():
     app = App()
     logger.info("Starting server on port {}", args.port)
     serve(app, host="localhost", port=args.port)
-
-if __name__ == "__main__":
-    main()

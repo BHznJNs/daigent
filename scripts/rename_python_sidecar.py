@@ -39,7 +39,7 @@ def main():
     dest_executable_parent = dest_executable.parent
     dest_executable_parent.mkdir(parents=True, exist_ok=True)
 
-    src_executable = Path(f"src-server/dist/main/main{ext}")
+    src_executable = Path(f"src-server/dist/server/server{ext}")
     if not src_executable.exists():
         print(f"Source file not found: {src_executable}", file=sys.stderr)
         sys.exit(1)
@@ -52,16 +52,16 @@ def main():
     
     # move dependency files
     dest_dependency_dir = Path(f"src-tauri/_internal/")
-    src_dependency_dir = Path(f"src-server/dist/main/_internal/")
+    src_dependency_dir = Path(f"src-server/dist/server/_internal/")
     if not src_dependency_dir.exists():
         print(f"Source directory not found: {src_dependency_dir}", file=sys.stderr)
         sys.exit(1)
-        
+
     try:
         shutil.move(str(src_dependency_dir), str(dest_dependency_dir))
     except Exception as e:
         print(f"Failed to move {src_dependency_dir} -> {dest_dependency_dir}: {e}", file=sys.stderr)
         sys.exit(1)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

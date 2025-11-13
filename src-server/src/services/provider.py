@@ -1,6 +1,6 @@
 from sqlalchemy import select
-from db import SessionLocal
-import db.models.provider as provider_models
+from ..db import SessionLocal
+from ..db.models import provider as provider_models
 
 class ProviderNotFoundError(Exception): pass
 class ModelNotFoundError(Exception): pass

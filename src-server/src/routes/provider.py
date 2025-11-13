@@ -1,8 +1,8 @@
-import db.schemas.provider as provider_schemas
 from flask import Blueprint, Response, jsonify, request
 from pydantic import ValidationError
-from ..services.provider import ProviderService
 from .utils import FlaskResponse
+from ..services.provider import ProviderService
+from ..db.schemas import provider as provider_schemas
 
 providers_bp = Blueprint("providers", __name__)
 
