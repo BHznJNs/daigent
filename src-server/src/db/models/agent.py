@@ -28,7 +28,7 @@ def _insert_initial_values(target, connection, **kw):
         system_prompt="You are a helpful assistant.")
 
     with Session() as session:
-        # check if there is any agent
+        # check if there is the orchestration agent
         stmt = select(Agent).where(Agent.name == orchestration_agent.name)
         exists = session.execute(stmt).scalars().first()
         if exists: return
