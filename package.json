@@ -8,6 +8,7 @@
     "build:frontend": "pnpm --filter src-frontend run build",
     "dev:server": "pnpm --filter src-server run dev",
     "build:server": "pnpm --filter src-server run build && python scripts/rename_python_sidecar.py",
+    "generate:server": "pnpm --filter src-server run alembic-generate",
     "dev:all": "run-p dev:frontend dev:server",
     "dev": "tauri dev -- -- --dev",
     "tauri": "tauri"

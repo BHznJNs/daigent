@@ -12,7 +12,7 @@ def get_providers() -> FlaskResponse:
         providers = service.get_providers()
         return jsonify([provider_schemas.ProviderRead
                                         .model_validate(provider)
-                                        .model_dump()
+                                        .model_dump(mode="json")
                         for provider in providers])
 
 @providers_bp.route("/", methods=["POST"])
@@ -26,7 +26,7 @@ def create_provider() -> FlaskResponse:
         new_provider = service.create_provider(data.model_dump())
         return jsonify(provider_schemas.ProviderRead
                                        .model_validate(new_provider)
-                                       .model_dump()), 201
+                                       .model_dump(mode="json")), 201
 
 @providers_bp.route("/<int:provider_id>", methods=["PUT"])
 def update_provider(provider_id: int) -> FlaskResponse:
@@ -39,7 +39,7 @@ def update_provider(provider_id: int) -> FlaskResponse:
         updated_provider = service.update_provider(provider_id, data.model_dump(exclude_unset=True))
         return jsonify(provider_schemas.ProviderRead
                                        .model_validate(updated_provider)
-                                       .model_dump())
+                                       .model_dump(mode="json"))
 
 @providers_bp.route("/<int:provider_id>", methods=["DELETE"])
 def delete_provider(provider_id: int) -> FlaskResponse:

@@ -8,7 +8,7 @@ export async function fetchProviders(): Promise<Provider[]> {
 export async function createProvider(
   providerData: Omit<Provider, "id">
 ): Promise<Provider> {
-  return await fetchApi<Provider>(`${API_BASE}/providers`, {
+  return await fetchApi<Provider>(`${API_BASE}/providers/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -1,13 +1,12 @@
-from pydantic import BaseModel, ConfigDict
+from . import DTOBase
 from ..models.provider import ProviderType, LlmModelCapability
 
-class LlmModel(BaseModel):
+class LlmModel(DTOBase):
     name: str
     context_size: int
     capability: LlmModelCapability
 
-class ProviderBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class ProviderBase(DTOBase):
     name: str
     type: ProviderType
     base_url: str
@@ -20,8 +19,7 @@ class ProviderRead(ProviderBase):
 class ProviderCreate(ProviderBase):
     pass
 
-class ProviderUpdate(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class ProviderUpdate(DTOBase):
     name: str | None = None
     type: ProviderType | None = None
     base_url: str | None = None

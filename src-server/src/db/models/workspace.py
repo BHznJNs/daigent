@@ -12,3 +12,4 @@ class Workspace(Base):
         secondary=workspace_agent_association_table,
         back_populates="workspaces"
     )
+    tasks = relationship("Task", back_populates="workspace", cascade="all, delete-orphan",)

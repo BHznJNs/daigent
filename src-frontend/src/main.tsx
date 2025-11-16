@@ -1,6 +1,23 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ReactDOM from "react-dom/client";
+import { Toaster } from "@/components/ui/sonner";
 import App from "./App";
 import "./index.css";
 
+// 创建 QueryClient 实例
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 分钟
+      retry: 1,
+    },
+  },
+});
+
 const root = document.getElementById("root") as HTMLElement;
-ReactDOM.createRoot(root).render(<App />);
+ReactDOM.createRoot(root).render(
+  <QueryClientProvider client={queryClient}>
+    <App />
+    <Toaster />
+  </QueryClientProvider>
+);

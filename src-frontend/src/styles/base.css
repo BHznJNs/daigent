@@ -7,3 +7,7 @@ html,
 body {
   overscroll-behavior: none;
 }
+
+input[type="password"]::-ms-reveal {
+  display: none !important;
+}

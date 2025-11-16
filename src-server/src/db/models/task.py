@@ -25,7 +25,7 @@ class Task(Base):
     type: Mapped[TaskType]
     name: Mapped[str]
     messages: Mapped[list[TaskMessage]] = mapped_column(DataclassListJSON(TaskMessage))
-    agent_id: Mapped[int] = mapped_column(ForeignKey(Agent.id), nullable=True)
+    agent_id: Mapped[int] = mapped_column(ForeignKey(Agent.id, ondelete="SET NULL"), nullable=True)
     agent = relationship("Agent", back_populates="tasks")
     workspace_id: Mapped[int] = mapped_column(ForeignKey(Workspace.id))
     workspace = relationship("Workspace", back_populates="tasks")

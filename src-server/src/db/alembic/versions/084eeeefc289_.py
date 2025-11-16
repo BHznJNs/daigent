@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 70b97a818dc4
+Revision ID: 084eeeefc289
 Revises: 
-Create Date: 2025-11-13 11:32:24.786636
+Create Date: 2025-11-16 10:20:03.247149
 
 """
 from typing import Sequence, Union
@@ -15,7 +15,7 @@ from db.models.utils import DataClassJSON
 from db.models.utils import DataclassListJSON
 
 # revision identifiers, used by Alembic.
-revision: str = '70b97a818dc4'
+revision: str = '084eeeefc289'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -50,9 +50,9 @@ def upgrade() -> None:
     op.create_table('agents',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('model', sa.Integer(), nullable=False),
     sa.Column('system_prompt', sa.String(), nullable=False),
-    sa.ForeignKeyConstraint(['model'], ['llm_models.id'], ),
+    sa.Column('model_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['model_id'], ['llm_models.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('tasks',
@@ -62,15 +62,15 @@ def upgrade() -> None:
     sa.Column('messages', DataclassListJSON(TaskMessage), nullable=False),
     sa.Column('agent_id', sa.Integer(), nullable=True),
     sa.Column('workspace_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['agent_id'], ['agents.id'], ),
+    sa.ForeignKeyConstraint(['agent_id'], ['agents.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['workspace_id'], ['workspaces.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('workspace_agent_association',
     sa.Column('workspace_id', sa.Integer(), nullable=False),
     sa.Column('agent_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['agent_id'], ['agents.id'], ),
-    sa.ForeignKeyConstraint(['workspace_id'], ['workspaces.id'], ),
+    sa.ForeignKeyConstraint(['agent_id'], ['agents.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['workspace_id'], ['workspaces.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('workspace_id', 'agent_id')
     )
     # ### end Alembic commands ###

@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 export type SettingItemProps = {
   title: React.ReactNode;
   description?: React.ReactNode;
+  align?: "start" | "center" | "end";
   children: React.ReactNode;
   className?: string;
   titleClassName?: string;
@@ -18,10 +19,20 @@ export function SettingItem({
   titleClassName,
   descriptionClassName,
   contentClassName,
+  align = "center",
 }: SettingItemProps) {
+  const alignClassName = {
+    start: "items-start",
+    center: "items-center",
+    end: "items-end",
+  }[align];
   return (
     <div
-      className={cn("flex items-center justify-between py-2 pr-1.5", className)}
+      className={cn(
+        "flex justify-between py-2 pr-1.5",
+        className,
+        alignClassName
+      )}
     >
       <div className="space-y-1 pr-4">
         <div className={cn("whitespace-nowrap leading-none", titleClassName)}>

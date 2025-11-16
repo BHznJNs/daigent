@@ -15,7 +15,7 @@ import { useSidebarStore } from "./stores/sidebar-store";
 import { useTabsStore } from "./stores/tabs-store";
 
 function Layout() {
-  const DEFAULT_SIDEBAR_SIZE = 40;
+  const DEFAULT_SIDEBAR_SIZE = 60;
   const { addTab } = useTabsStore();
   const { isOpen, openSidebar, closeSidebar } = useSidebarStore();
   const [isDragging, setIsDragging] = useState(false);

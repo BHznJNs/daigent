@@ -6,7 +6,7 @@ from . import models
 
 APP_NAME = "org.daigent.desktop"
 
-data_dir = Path(user_data_dir(APP_NAME, ensure_exists=True))
+data_dir = Path(user_data_dir(APP_NAME, appauthor=False, ensure_exists=True))
 db_path = data_dir / "sqlite.db"
 
 engine = create_engine(f"sqlite:///{db_path}")

@@ -7,7 +7,7 @@ export async function fetchApi<T>(
 ): Promise<T> {
   const res = await fetch(input, init);
   if (res.ok) {
-    return res.json();
+    return await res.json();
   }
 
   let errorMessage: string;

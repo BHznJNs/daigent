@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { SideBarHeader } from "../../SideBar";
 import { GeneralSettings } from "./GeneralSettings";
+import { ProviderSettings } from "./ProviderSettings";
 
 export function SettingsView() {
   const settingItems = [
@@ -12,9 +13,9 @@ export function SettingsView() {
       content: <GeneralSettings />,
     },
     {
-      id: "test",
-      title: "测试",
-      content: <div>测试</div>,
+      id: "providers",
+      title: "模型服务",
+      content: <ProviderSettings />,
     },
   ];
 
@@ -24,11 +25,11 @@ export function SettingsView() {
     "data-[state=active]:!border-l-primary data-[state=active]:opacity-100 data-[state=active]:shadow-none"
   );
   return (
-    <>
+    <div className="flex h-full flex-col">
       <SideBarHeader title="设置" actions={[]} />
       <Tabs
         defaultValue={settingItems[0].id}
-        className="flex h-full w-full flex-row gap-0"
+        className="flex min-h-0 w-full flex-1 flex-row gap-0"
       >
         <TabsList className="flex h-full flex-col items-stretch gap-2 rounded-none border-r bg-transparent p-0">
           {settingItems.map((item) => (
@@ -51,6 +52,6 @@ export function SettingsView() {
           ))}
         </ScrollArea>
       </Tabs>
-    </>
+    </div>
   );
 }
