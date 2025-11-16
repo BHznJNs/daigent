@@ -12,17 +12,28 @@ export type LlmModelCapability = {
   tool_use: boolean;
 };
 
-export type LlmModel = {
+export type LlmModelBase = {
   name: string;
   context_size: number;
   capability: LlmModelCapability;
 };
 
-export type Provider = {
-  id: number;
+export type LlmModelCreate = LlmModelBase;
+export type LlmModelRead = LlmModelBase & { id: number };
+export type LlmModelUpdate = LlmModelRead;
+
+export type ProviderBase = {
   name: string;
   type: ProviderType;
   base_url: string;
   api_key: string;
-  models: LlmModel[];
+};
+
+export type ProviderCreate = ProviderBase & { models: LlmModelCreate[] };
+export type ProviderRead = ProviderBase & {
+  id: number;
+  models: LlmModelRead[];
+};
+export type ProviderUpdate = ProviderBase & {
+  models: (LlmModelUpdate | LlmModelCreate)[];
 };

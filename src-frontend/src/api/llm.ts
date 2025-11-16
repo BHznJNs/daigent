@@ -5,8 +5,8 @@ export async function fetchProviderModels(
   providerType: ProviderType,
   baseUrl: string,
   apiKey: string
-): Promise<{ id: string }[]> {
-  return await fetchApi(`${API_BASE}/llm/models`, {
+): Promise<{ model_id: string }[]> {
+  const models = await fetchApi<{ id: string }[]>(`${API_BASE}/llm/models`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -17,4 +17,7 @@ export async function fetchProviderModels(
       api_key: apiKey,
     }),
   });
+  // rename the field `id` to `model_id` to prevent
+  // the conflict with `id` in `LlmModel` model
+  return models.map((model) => ({ model_id: model.id }));
 }

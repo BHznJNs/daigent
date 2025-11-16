@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { fetchProviderModels } from "@/api/llm";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,23 +19,51 @@ import {
 import { Item, ItemActions, ItemContent } from "@/components/ui/item";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Provider } from "@/types/provider";
+import type { ProviderBase } from "@/types/provider";
 
 type ModelSelectorDialogProps = {
-  provider: Provider;
+  provider: ProviderBase;
   isOpen: boolean;
   existingModels: string[];
   onClose: () => void;
   onConfirm: (selectedModels: string[]) => void;
 };
 
+function ModelSelectorSkeleton() {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: static component
+          key={`skeleton-${index}`}
+          className="flex items-center justify-between rounded-lg border p-3"
+        >
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-4 w-4" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+          <div className="flex gap-1">
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-4 w-12" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function ModelSelectorDialog({
   provider,
   isOpen,
-  existingModels = [],
+  existingModels: existingModelArr,
   onClose,
   onConfirm,
 }: ModelSelectorDialogProps) {
+  const existingModels = new Set(existingModelArr);
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
 
   const {
@@ -44,20 +71,20 @@ export function ModelSelectorDialog({
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["provider-models", provider.id],
+    queryKey: ["provider-models", provider.name, provider.base_url],
     queryFn: () =>
       fetchProviderModels(provider.type, provider.base_url, provider.api_key),
     enabled: isOpen,
   });
 
   useEffect(() => {
-    if (availableModels.length > 0 && existingModels.length > 0) {
-      const validExistingModels = existingModels.filter((modelId) =>
-        availableModels.some((model) => model.id === modelId)
-      );
+    if (availableModels.length > 0) {
+      const validExistingModels = availableModels
+        .map((model) => model.model_id)
+        .filter((modelId) => existingModels.has(modelId));
       setSelectedModels(validExistingModels);
     }
-  }, [availableModels, existingModels]);
+  }, [availableModels]);
 
   const handleToggleModel = (modelId: string) => {
     setSelectedModels((prev) => {
@@ -69,16 +96,7 @@ export function ModelSelectorDialog({
   };
 
   const handleConfirm = () => {
-    if (selectedModels.length === 0) {
-      toast.error("请至少选择一个模型", {
-        description: "至少选择一个模型添加到服务提供商。",
-      });
-      return;
-    }
-
-    onConfirm(
-      selectedModels.filter((modelId) => !existingModels.includes(modelId))
-    );
+    onConfirm(selectedModels);
     setSelectedModels([]);
     onClose();
   };
@@ -90,30 +108,7 @@ export function ModelSelectorDialog({
 
   const renderContent = () => {
     if (isLoading) {
-      return (
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              key={`skeleton-${index}`}
-              className="flex items-center justify-between rounded-lg border p-3"
-            >
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-4 w-4" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
-              </div>
-              <div className="flex gap-1">
-                <Skeleton className="h-4 w-12" />
-                <Skeleton className="h-4 w-12" />
-                <Skeleton className="h-4 w-12" />
-              </div>
-            </div>
-          ))}
-        </div>
-      );
+      return <ModelSelectorSkeleton />;
     }
 
     if (error) {
@@ -143,17 +138,18 @@ export function ModelSelectorDialog({
     return (
       <div className="space-y-3">
         {availableModels.map((model) => {
-          const isSelected = selectedModels.includes(model.id);
+          const { model_id } = model;
+          const isSelected = selectedModels.includes(model_id);
 
           return (
-            <Item variant="outline" key={model.id}>
+            <Item variant="outline" key={model_id}>
               <ItemContent>
-                <span className="font-medium">{model.id}</span>
+                <span className="font-medium">{model_id}</span>
               </ItemContent>
               <ItemActions>
                 <Checkbox
                   checked={isSelected}
-                  onCheckedChange={() => handleToggleModel(model.id)}
+                  onCheckedChange={() => handleToggleModel(model_id)}
                 />
               </ItemActions>
             </Item>

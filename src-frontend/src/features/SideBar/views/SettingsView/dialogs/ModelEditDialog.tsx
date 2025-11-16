@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,13 +16,13 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import type { LlmModel } from "@/types/provider";
+import type { LlmModelBase } from "@/types/provider";
 
 type ModelEditDialogProps = {
-  model: LlmModel;
+  model: LlmModelBase | null;
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (model: LlmModel) => void;
+  onConfirm: (model: LlmModelBase) => void;
 };
 
 export function ModelEditDialog({
@@ -35,11 +36,15 @@ export function ModelEditDialog({
     reset,
     handleSubmit,
     formState: { isSubmitting },
-  } = useForm<LlmModel>({
-    defaultValues: model,
-  });
+  } = useForm<LlmModelBase>();
 
-  const handleSubmitForm = (data: LlmModel) => {
+  useEffect(() => {
+    if (isOpen && model) {
+      reset(model);
+    }
+  }, [model, open]);
+
+  const handleSubmitForm = (data: LlmModelBase) => {
     onConfirm(data);
   };
 

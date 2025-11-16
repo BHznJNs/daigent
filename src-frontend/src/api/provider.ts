@@ -1,14 +1,18 @@
-import type { Provider } from "@/types/provider";
+import type {
+  ProviderCreate,
+  ProviderRead,
+  ProviderUpdate,
+} from "@/types/provider";
 import { API_BASE, fetchApi } from "./index";
 
-export async function fetchProviders(): Promise<Provider[]> {
-  return await fetchApi<Provider[]>(`${API_BASE}/providers`);
+export async function fetchProviders(): Promise<ProviderRead[]> {
+  return await fetchApi<ProviderRead[]>(`${API_BASE}/providers`);
 }
 
 export async function createProvider(
-  providerData: Omit<Provider, "id">
-): Promise<Provider> {
-  return await fetchApi<Provider>(`${API_BASE}/providers/`, {
+  providerData: ProviderCreate
+): Promise<ProviderRead> {
+  return await fetchApi<ProviderRead>(`${API_BASE}/providers/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -19,9 +23,9 @@ export async function createProvider(
 
 export async function updateProvider(
   providerId: number,
-  providerData: Partial<Omit<Provider, "id">>
-): Promise<Provider> {
-  return await fetchApi<Provider>(`${API_BASE}/providers/${providerId}`, {
+  providerData: ProviderUpdate
+): Promise<ProviderRead> {
+  return await fetchApi<ProviderRead>(`${API_BASE}/providers/${providerId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

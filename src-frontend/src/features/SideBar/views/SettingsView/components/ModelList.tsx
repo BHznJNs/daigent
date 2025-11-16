@@ -9,14 +9,22 @@ import {
   ItemDescription,
 } from "@/components/ui/item";
 import { Label } from "@/components/ui/label";
-import type { LlmModel, Provider } from "@/types/provider";
+import type {
+  LlmModelBase,
+  LlmModelCreate,
+  LlmModelUpdate,
+  ProviderCreate,
+  ProviderRead,
+} from "@/types/provider";
 import { ModelEditDialog } from "../dialogs/ModelEditDialog";
 import { ModelSelectorDialog } from "../dialogs/ModelSelectorDialog";
+
+type LlmModel = LlmModelCreate | LlmModelUpdate;
 
 type ModelListProps = {
   models: LlmModel[];
   onChange: (models: LlmModel[]) => void;
-  provider: Provider;
+  provider: ProviderRead | ProviderCreate;
 };
 
 type ModelItemProps = {
@@ -28,7 +36,7 @@ type ModelItemProps = {
 
 function ModelItem({ model, index, onEdit, onDelete }: ModelItemProps) {
   const capabilityBadges = (() => (
-    <div className="space-x-1">
+    <span className="space-x-1">
       {model.capability.vision && (
         <Badge key="vision" variant="secondary">
           视觉
@@ -44,7 +52,7 @@ function ModelItem({ model, index, onEdit, onDelete }: ModelItemProps) {
           工具使用
         </Badge>
       )}
-    </div>
+    </span>
   ))();
 
   return (
@@ -72,48 +80,20 @@ function ModelItem({ model, index, onEdit, onDelete }: ModelItemProps) {
         </Button>
       </ItemActions>
     </Item>
-    // <Card key={`${model.name}-${index}`} className="px-4 py-2">
-    //   <div className="flex items-center justify-between">
-    //     <div className="flex-1">
-    //       <div className="mb-1 flex items-center gap-2">
-    //         <span className="font-medium text-sm">{model.name}</span>
-    //       </div>
-    //       <div className="flex gap-1">{capabilityBadges}</div>
-    //     </div>
-    //     <div className="flex gap-1">
-    //       <Button
-    //         type="button"
-    //         variant="ghost"
-    //         size="sm"
-    //         onClick={() => onEdit(index)}
-    //       >
-    //         <Edit2 className="h-4 w-4" />
-    //       </Button>
-    //       <Button
-    //         type="button"
-    //         variant="ghost"
-    //         size="sm"
-    //         onClick={() => onDelete(index)}
-    //       >
-    //         <Trash2 className="h-4 w-4" />
-    //       </Button>
-    //     </div>
-    //   </div>
-    // </Card>
   );
 }
 
 export function ModelList({ models, onChange, provider }: ModelListProps) {
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editingModel, setEditingModel] = useState<LlmModel | undefined>();
+  const [editingModel, setEditingModel] = useState<LlmModel | null>(null);
 
   const handleFetchModelList = () => {
     setShowModelSelector(true);
   };
 
   const handleModelSelection = (selectedModels: string[]) => {
-    const modelsToAdd: LlmModel[] = selectedModels.map((modelId) => ({
+    const modelsToAdd: LlmModelCreate[] = selectedModels.map((modelId) => ({
       name: modelId,
       context_size: 128_000,
       capability: {
@@ -137,23 +117,24 @@ export function ModelList({ models, onChange, provider }: ModelListProps) {
     onChange(newModels);
   };
 
-  const handleEditConfirm = (model: LlmModel) => {
+  const handleEditConfirm = (model: LlmModelBase) => {
     if (!editingModel) {
       setShowEditDialog(false);
       return;
     }
 
-    const updatedModels = models.map((m) =>
-      m.name === editingModel.name ? model : m
-    );
+    const updatedModels = models.map((m) => {
+      const isMatch = m.name === editingModel.name;
+      return isMatch ? model : m;
+    });
     onChange(updatedModels);
     setShowEditDialog(false);
-    setEditingModel(undefined);
+    setEditingModel(null);
   };
 
   const handleEditClose = () => {
     setShowEditDialog(false);
-    setEditingModel(undefined);
+    setEditingModel(null);
   };
 
   return (
@@ -192,14 +173,12 @@ export function ModelList({ models, onChange, provider }: ModelListProps) {
         onConfirm={handleModelSelection}
       />
 
-      {editingModel && (
-        <ModelEditDialog
-          model={editingModel}
-          isOpen={showEditDialog}
-          onClose={handleEditClose}
-          onConfirm={handleEditConfirm}
-        />
-      )}
+      <ModelEditDialog
+        model={editingModel}
+        isOpen={showEditDialog}
+        onClose={handleEditClose}
+        onConfirm={handleEditConfirm}
+      />
     </>
   );
 }

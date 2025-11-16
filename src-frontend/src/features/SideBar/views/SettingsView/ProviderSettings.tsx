@@ -17,12 +17,12 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PROVIDER_TYPE_LABELS } from "@/constants/provider";
-import type { Provider, ProviderType } from "@/types/provider";
+import { DEFAULT_PROVIDER, PROVIDER_TYPE_LABELS } from "@/constants/provider";
+import type { ProviderRead, ProviderType } from "@/types/provider";
 import { ProviderEdit } from "./components/ProviderEdit";
 
 type ProviderCardProps = {
-  provider: Provider;
+  provider: ProviderRead;
 };
 
 function ProviderCard({ provider }: ProviderCardProps) {
@@ -60,7 +60,6 @@ function ProviderCard({ provider }: ProviderCardProps) {
           <CardContent>
             <ProviderEdit
               provider={provider}
-              mode="edit"
               onSuccess={() => setIsOpen(false)}
               onCancel={() => setIsOpen(false)}
             />
@@ -151,7 +150,7 @@ export function ProviderSettings() {
             <CardContent>
               <h3 className="mb-3 font-medium text-sm">添加服务提供商</h3>
               <ProviderEdit
-                mode="create"
+                provider={DEFAULT_PROVIDER}
                 onSuccess={() => setShowAddForm(false)}
                 onCancel={() => setShowAddForm(false)}
               />

@@ -23,35 +23,30 @@ import {
   PROVIDER_DEFAULT_URLS,
   PROVIDER_TYPE_LABELS,
 } from "@/constants/provider";
-import type { LlmModel, Provider, ProviderType } from "@/types/provider";
+import type {
+  LlmModelCreate,
+  ProviderCreate,
+  ProviderRead,
+  ProviderType,
+  ProviderUpdate,
+} from "@/types/provider";
 import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog";
 import { ModelList } from "./ModelList";
 
 const URL_REGEX = /^(https?:\/\/)([^\s/$.?#].[^\s]*)$/;
 
-type ProviderFormData = Omit<Provider, "id">;
-
 type ProviderEditProps = {
-  provider?: Provider;
-  mode: "create" | "edit";
+  provider: ProviderRead | ProviderCreate;
   onSuccess?: () => void;
   onCancel?: () => void;
 };
 
-const DEFAULT_PROVIDER = {
-  name: "",
-  type: "openai" as ProviderType,
-  base_url: "",
-  api_key: "",
-  models: [],
-} satisfies Partial<Provider>;
-
 export function ProviderEdit({
   provider,
-  mode,
   onSuccess,
   onCancel,
 }: ProviderEditProps) {
+  const isEditMode = "id" in provider;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const queryClient = useQueryClient();
 
@@ -61,28 +56,22 @@ export function ProviderEdit({
     reset,
     formState: { isSubmitting },
     control,
-  } = useForm<ProviderFormData>({
-    defaultValues: DEFAULT_PROVIDER,
-  });
+  } = useForm<ProviderCreate>();
 
   useEffect(() => {
-    if (provider) {
-      reset({
-        name: provider.name,
-        type: provider.type,
-        base_url: provider.base_url,
-        api_key: provider.api_key,
-        models: provider.models,
-      });
-    } else {
-      reset(DEFAULT_PROVIDER);
-    }
+    reset({
+      name: provider.name,
+      type: provider.type,
+      base_url: provider.base_url,
+      api_key: provider.api_key,
+      models: provider.models,
+    });
   }, [provider, reset]);
 
   const models = useWatch({ control, name: "models" });
   const formValues = useWatch({ control });
 
-  const handleModelsChange = (newModels: LlmModel[]) => {
+  const handleModelsChange = (newModels: LlmModelCreate[]) => {
     setValue("models", newModels);
   };
 
@@ -104,7 +93,7 @@ export function ProviderEdit({
   });
 
   const updateProviderMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: ProviderFormData }) =>
+    mutationFn: ({ id, data }: { id: number; data: ProviderUpdate }) =>
       updateProvider(id, data),
     onSuccess: (updatedProvider) => {
       queryClient.invalidateQueries({ queryKey: ["providers"] });
@@ -138,29 +127,37 @@ export function ProviderEdit({
     },
   });
 
-  const onSubmit = (data: ProviderFormData) => {
-    if (!data.models || data.models.length === 0) {
-      toast.error("请至少添加一个模型", {
-        description: "服务提供商至少需要配置一个模型。",
-      });
+  const onSubmit = (data: ProviderCreate | ProviderUpdate) => {
+    if (isEditMode) {
+      updateProviderMutation.mutate({ id: provider.id, data });
+    } else {
+      createProviderMutation.mutate(data);
+    }
+  };
+
+  const handleTypeChange = (value: ProviderType) => {
+    if (!(value in PROVIDER_DEFAULT_URLS)) {
       return;
     }
-
-    if (mode === "create") {
-      createProviderMutation.mutate(data);
-    } else if (mode === "edit" && provider) {
-      updateProviderMutation.mutate({ id: provider.id, data });
+    setValue("type", value);
+    const shouldUpdateBaseUrl =
+      formValues.base_url === undefined ||
+      formValues.base_url === "" ||
+      (formValues.type &&
+        formValues.base_url === PROVIDER_DEFAULT_URLS[formValues.type]);
+    if (shouldUpdateBaseUrl) {
+      setValue("base_url", PROVIDER_DEFAULT_URLS[value]);
     }
   };
 
   const handleDelete = () => {
-    if (provider) {
+    if (isEditMode) {
       setShowDeleteDialog(true);
     }
   };
 
   const handleConfirmDelete = () => {
-    if (provider) {
+    if ("id" in provider) {
       deleteProviderMutation.mutate(provider.id);
     }
   };
@@ -215,21 +212,7 @@ export function ProviderEdit({
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor="provider-type">类型</FieldLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={(value: ProviderType) => {
-                    field.onChange(value);
-                    const shouldUpdateBaseUrl =
-                      formValues.base_url === undefined ||
-                      formValues.base_url === "" ||
-                      (formValues.type &&
-                        formValues.base_url ===
-                          PROVIDER_DEFAULT_URLS[formValues.type]);
-                    if (shouldUpdateBaseUrl) {
-                      setValue("base_url", PROVIDER_DEFAULT_URLS[value]);
-                    }
-                  }}
-                >
+                <Select value={field.value} onValueChange={handleTypeChange}>
                   <SelectTrigger
                     id="provider-type"
                     aria-invalid={fieldState.invalid}
@@ -311,11 +294,11 @@ export function ProviderEdit({
           <ModelList
             models={models || []}
             onChange={handleModelsChange}
-            provider={formValues as Provider}
+            provider={formValues as ProviderRead | ProviderCreate}
           />
 
           <div className="mt-2 flex justify-end gap-2">
-            {mode === "edit" && (
+            {isEditMode && (
               <Button
                 type="button"
                 variant="destructive"
@@ -335,26 +318,23 @@ export function ProviderEdit({
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {(() => {
-                const isCreate = mode === "create";
-                if (isCreate) {
-                  return isSubmitting ? "创建中..." : "创建";
+                if (isEditMode) {
+                  return isSubmitting ? "保存中..." : "保存";
                 }
-                return isSubmitting ? "保存中..." : "保存";
+                return isSubmitting ? "创建中..." : "创建";
               })()}
             </Button>
           </div>
         </FieldGroup>
       </form>
 
-      {provider && (
-        <ConfirmDeleteDialog
-          provider={provider}
-          isOpen={showDeleteDialog}
-          onConfirm={handleConfirmDelete}
-          onCancel={handleCancelDelete}
-          isDeleting={deleteProviderMutation.isPending}
-        />
-      )}
+      <ConfirmDeleteDialog
+        provider={provider}
+        isOpen={showDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        isDeleting={deleteProviderMutation.isPending}
+      />
     </>
   );
 }

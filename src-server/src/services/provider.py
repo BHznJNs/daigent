@@ -23,7 +23,7 @@ class ProviderService:
         if models_data:
             new_models = []
             for model_data in models_data:
-                capability_data = model_data.pop("capability")
+                capability_data = model_data.pop("capability", {})
                 new_models.append(provider_models.LlmModel(
                     capability=provider_models.LlmModelCapability(**capability_data),
                     **model_data))
@@ -38,6 +38,30 @@ class ProviderService:
         return new_provider
 
     def update_provider(self, id: int, data: dict) -> provider_models.Provider:
+        def update_provider_models(
+                provider: provider_models.Provider,
+                new_models: list[dict]):
+            existing_models_map = {model.id: model for model in provider.models}
+            for model_data in new_models:
+                model_id = model_data.pop("id", None)
+                capability_data = model_data.pop("capability", {})
+                capability = provider_models.LlmModelCapability(**capability_data)
+                is_create = model_id is None
+
+                if is_create:
+                    new_model = provider_models.LlmModel(
+                        capability=capability,
+                        **model_data)
+                    provider.models.append(new_model)
+                    continue
+
+                if model_id in existing_models_map:
+                    existing_model = existing_models_map[model_id]
+                    for key, value in model_data.items():
+                        if value is not None:
+                            setattr(existing_model, key, value)
+                    existing_model.capability = capability
+
         new_models_data = data.pop("models", None)
 
         stmt = select(provider_models.Provider).where(provider_models.Provider.id == id)
@@ -49,13 +73,7 @@ class ProviderService:
                 setattr(provider, key, value)
 
         if new_models_data:
-            new_models = []
-            for model_data in new_models_data:
-                capability_data = model_data.pop("capability")
-                new_models.append(provider_models.LlmModel(
-                    capability=provider_models.LlmModelCapability(**capability_data),
-                    **model_data))
-            provider.models = new_models
+            update_provider_models(provider, new_models_data)
 
         try:
             self._db_session.commit()
