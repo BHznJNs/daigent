@@ -56,14 +56,16 @@ function ProviderCard({ provider }: ProviderCardProps) {
       </CollapsibleTrigger>
 
       <CollapsibleContent className="mt-2">
-        <div className="rounded-lg border p-4">
-          <ProviderEdit
-            provider={provider}
-            mode="edit"
-            onSuccess={() => setIsOpen(false)}
-            onCancel={() => setIsOpen(false)}
-          />
-        </div>
+        <Card>
+          <CardContent>
+            <ProviderEdit
+              provider={provider}
+              mode="edit"
+              onSuccess={() => setIsOpen(false)}
+              onCancel={() => setIsOpen(false)}
+            />
+          </CardContent>
+        </Card>
       </CollapsibleContent>
     </Collapsible>
   );

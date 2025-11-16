@@ -41,7 +41,7 @@ type ProviderEditProps = {
 const DEFAULT_PROVIDER = {
   name: "",
   type: "openai" as ProviderType,
-  base_url: PROVIDER_DEFAULT_URLS.openai,
+  base_url: "",
   api_key: "",
   models: [],
 } satisfies Partial<Provider>;
@@ -79,7 +79,7 @@ export function ProviderEdit({
     }
   }, [provider, reset]);
 
-  const watchedModels = useWatch({ control, name: "models" });
+  const models = useWatch({ control, name: "models" });
   const formValues = useWatch({ control });
 
   const handleModelsChange = (newModels: LlmModel[]) => {
@@ -309,7 +309,7 @@ export function ProviderEdit({
           />
 
           <ModelList
-            models={watchedModels || []}
+            models={models || []}
             onChange={handleModelsChange}
             provider={formValues as Provider}
           />

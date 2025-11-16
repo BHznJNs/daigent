@@ -17,6 +17,7 @@ import {
   EmptyDescription,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Item, ItemActions, ItemContent } from "@/components/ui/item";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Provider } from "@/types/provider";
@@ -145,18 +146,17 @@ export function ModelSelectorDialog({
           const isSelected = selectedModels.includes(model.id);
 
           return (
-            <Button
-              key={model.id}
-              variant="outline"
-              className="flex w-full justify-between"
-              onClick={() => handleToggleModel(model.id)}
-            >
-              <div className="font-medium text-sm">{model.id}</div>
-              <Checkbox
-                checked={isSelected}
-                onCheckedChange={() => handleToggleModel(model.id)}
-              />
-            </Button>
+            <Item variant="outline" key={model.id}>
+              <ItemContent>
+                <span className="font-medium">{model.id}</span>
+              </ItemContent>
+              <ItemActions>
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() => handleToggleModel(model.id)}
+                />
+              </ItemActions>
+            </Item>
           );
         })}
       </div>

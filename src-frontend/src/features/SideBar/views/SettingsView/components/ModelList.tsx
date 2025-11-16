@@ -1,9 +1,14 @@
 import { Download, Edit2, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { SettingItem } from "@/components/SettingItem";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+} from "@/components/ui/item";
+import { Label } from "@/components/ui/label";
 import type { LlmModel, Provider } from "@/types/provider";
 import { ModelEditDialog } from "../dialogs/ModelEditDialog";
 import { ModelSelectorDialog } from "../dialogs/ModelSelectorDialog";
@@ -19,45 +24,82 @@ type ModelItemProps = {
   index: number;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
-  getCapabilityBadges: (model: LlmModel) => JSX.Element[];
 };
 
-function ModelItem({
-  model,
-  index,
-  onEdit,
-  onDelete,
-  getCapabilityBadges,
-}: ModelItemProps) {
+function ModelItem({ model, index, onEdit, onDelete }: ModelItemProps) {
+  const capabilityBadges = (() => (
+    <div className="space-x-1">
+      {model.capability.vision && (
+        <Badge key="vision" variant="secondary">
+          视觉
+        </Badge>
+      )}
+      {model.capability.reasoning && (
+        <Badge key="reasoning" variant="secondary">
+          推理
+        </Badge>
+      )}
+      {model.capability.tool_use && (
+        <Badge key="tool_use" variant="secondary">
+          工具使用
+        </Badge>
+      )}
+    </div>
+  ))();
+
   return (
-    <Card key={`${model.name}-${index}`} className="p-3">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <div className="mb-1 flex items-center gap-2">
-            <span className="font-medium">{model.name}</span>
-          </div>
-          <div className="flex gap-1">{getCapabilityBadges(model)}</div>
-        </div>
-        <div className="flex gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => onEdit(index)}
-          >
-            <Edit2 className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(index)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </Card>
+    <Item variant="outline" className="py-2">
+      <ItemContent>
+        <span className="font-medium">{model.name}</span>
+      </ItemContent>
+      <ItemDescription>{capabilityBadges}</ItemDescription>
+      <ItemActions>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => onEdit(index)}
+        >
+          <Edit2 className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => onDelete(index)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </ItemActions>
+    </Item>
+    // <Card key={`${model.name}-${index}`} className="px-4 py-2">
+    //   <div className="flex items-center justify-between">
+    //     <div className="flex-1">
+    //       <div className="mb-1 flex items-center gap-2">
+    //         <span className="font-medium text-sm">{model.name}</span>
+    //       </div>
+    //       <div className="flex gap-1">{capabilityBadges}</div>
+    //     </div>
+    //     <div className="flex gap-1">
+    //       <Button
+    //         type="button"
+    //         variant="ghost"
+    //         size="sm"
+    //         onClick={() => onEdit(index)}
+    //       >
+    //         <Edit2 className="h-4 w-4" />
+    //       </Button>
+    //       <Button
+    //         type="button"
+    //         variant="ghost"
+    //         size="sm"
+    //         onClick={() => onDelete(index)}
+    //       >
+    //         <Trash2 className="h-4 w-4" />
+    //       </Button>
+    //     </div>
+    //   </div>
+    // </Card>
   );
 }
 
@@ -65,7 +107,6 @@ export function ModelList({ models, onChange, provider }: ModelListProps) {
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingModel, setEditingModel] = useState<LlmModel | undefined>();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFetchModelList = () => {
     setShowModelSelector(true);
@@ -97,23 +138,17 @@ export function ModelList({ models, onChange, provider }: ModelListProps) {
   };
 
   const handleEditConfirm = (model: LlmModel) => {
-    setIsSubmitting(true);
-    try {
-      if (editingModel) {
-        // 编辑现有模型
-        const updatedModels = models.map((m) =>
-          m.name === editingModel.name ? model : m
-        );
-        onChange(updatedModels);
-      } else {
-        // 添加新模型
-        onChange([...models, model]);
-      }
+    if (!editingModel) {
       setShowEditDialog(false);
-      setEditingModel(undefined);
-    } finally {
-      setIsSubmitting(false);
+      return;
     }
+
+    const updatedModels = models.map((m) =>
+      m.name === editingModel.name ? model : m
+    );
+    onChange(updatedModels);
+    setShowEditDialog(false);
+    setEditingModel(undefined);
   };
 
   const handleEditClose = () => {
@@ -121,36 +156,11 @@ export function ModelList({ models, onChange, provider }: ModelListProps) {
     setEditingModel(undefined);
   };
 
-  const getCapabilityBadges = (model: LlmModel): JSX.Element[] => {
-    const badges: JSX.Element[] = [];
-    if (model.capability.vision) {
-      badges.push(
-        <Badge key="vision" variant="secondary">
-          视觉
-        </Badge>
-      );
-    }
-    if (model.capability.reasoning) {
-      badges.push(
-        <Badge key="reasoning" variant="secondary">
-          推理
-        </Badge>
-      );
-    }
-    if (model.capability.tool_use) {
-      badges.push(
-        <Badge key="tool_use" variant="secondary">
-          工具使用
-        </Badge>
-      );
-    }
-    return badges;
-  };
-
   return (
     <>
-      <div className="space-y-4">
-        <SettingItem title="模型列表">
+      <div className="flex flex-col gap-3">
+        <div className="flex justify-between">
+          <Label>模型列表</Label>
           <Button
             type="button"
             variant="outline"
@@ -160,8 +170,7 @@ export function ModelList({ models, onChange, provider }: ModelListProps) {
             <Download className="mr-1 h-4 w-4" />
             获取模型
           </Button>
-        </SettingItem>
-
+        </div>
         <div className="space-y-2">
           {models.map((model, index) => (
             <ModelItem
@@ -170,7 +179,6 @@ export function ModelList({ models, onChange, provider }: ModelListProps) {
               index={index}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              getCapabilityBadges={getCapabilityBadges}
             />
           ))}
         </div>
@@ -184,13 +192,14 @@ export function ModelList({ models, onChange, provider }: ModelListProps) {
         onConfirm={handleModelSelection}
       />
 
-      <ModelEditDialog
-        model={editingModel}
-        isOpen={showEditDialog}
-        onClose={handleEditClose}
-        onConfirm={handleEditConfirm}
-        isSubmitting={isSubmitting}
-      />
+      {editingModel && (
+        <ModelEditDialog
+          model={editingModel}
+          isOpen={showEditDialog}
+          onClose={handleEditClose}
+          onConfirm={handleEditConfirm}
+        />
+      )}
     </>
   );
 }

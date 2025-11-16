@@ -1,5 +1,4 @@
-import { useForm } from "react-hook-form";
-import { SettingItem } from "@/components/SettingItem";
+import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -9,22 +8,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { LlmModel } from "@/types/provider";
 
 type ModelEditDialogProps = {
-  model?: LlmModel;
+  model: LlmModel;
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (model: LlmModel) => void;
-  isSubmitting?: boolean;
-};
-
-const DEFAULT_MODEL_CAPABILITY = {
-  vision: false,
-  reasoning: false,
-  tool_use: false,
 };
 
 export function ModelEditDialog({
@@ -32,31 +29,14 @@ export function ModelEditDialog({
   isOpen,
   onClose,
   onConfirm,
-  isSubmitting = false,
 }: ModelEditDialogProps) {
-  const isEditing = !!model;
-
-  // 计算按钮文本
-  let buttonText = "添加";
-  if (isSubmitting) {
-    buttonText = "保存中...";
-  } else if (isEditing) {
-    buttonText = "保存";
-  }
-
   const {
-    register,
+    control,
     reset,
-    setValue,
-    watch,
     handleSubmit,
-    formState: { errors },
+    formState: { isSubmitting },
   } = useForm<LlmModel>({
-    defaultValues: model || {
-      name: "",
-      context_size: 128_000,
-      capability: DEFAULT_MODEL_CAPABILITY,
-    },
+    defaultValues: model,
   });
 
   const handleSubmitForm = (data: LlmModel) => {
@@ -72,89 +52,125 @@ export function ModelEditDialog({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "编辑模型" : "添加模型"}</DialogTitle>
+          <DialogTitle>{"编辑模型信息"}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(handleSubmitForm)} className="space-y-4">
-          <SettingItem title="模型名称">
-            <Input
-              id="model-name"
-              {...register("name", {
+        <form
+          onSubmit={(e) => {
+            e.stopPropagation();
+            handleSubmit(handleSubmitForm)(e);
+          }}
+        >
+          <FieldGroup>
+            <Controller
+              name="name"
+              control={control}
+              rules={{
                 required: "请输入模型名称",
                 minLength: {
                   value: 1,
                   message: "模型名称不能为空",
                 },
-              })}
-              placeholder="请输入模型名称"
+              }}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="model-name">模型名称</FieldLabel>
+                  <Input
+                    {...field}
+                    id="model-name"
+                    aria-invalid={fieldState.invalid}
+                    placeholder="请输入模型名称"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
             />
-            {errors.name && (
-              <p className="text-destructive text-sm">{errors.name.message}</p>
-            )}
-          </SettingItem>
 
-          <SettingItem title="上下文大小">
-            <Input
-              id="context-size"
-              type="number"
-              placeholder="128000"
-              {...register("context_size", {
+            <Controller
+              name="context_size"
+              control={control}
+              rules={{
                 required: "请输入上下文大小",
                 min: {
                   value: 1,
                   message: "上下文大小必须大于 0",
                 },
-              })}
+              }}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="context-size">上下文大小</FieldLabel>
+                  <Input
+                    {...field}
+                    id="context-size"
+                    type="number"
+                    aria-invalid={fieldState.invalid}
+                    placeholder="128000"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
             />
-            {errors.context_size && (
-              <p className="text-destructive text-sm">
-                {errors.context_size.message}
-              </p>
-            )}
-          </SettingItem>
 
-          <SettingItem title="模型能力" align="start">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="vision"
-                  checked={watch("capability.vision") as boolean}
-                  onCheckedChange={(checked: boolean) =>
-                    setValue("capability.vision", checked)
-                  }
+            <Field>
+              <FieldLabel>模型能力</FieldLabel>
+              <div className="flex flex-col gap-3">
+                <Controller
+                  name="capability.vision"
+                  control={control}
+                  render={({ field }) => (
+                    <Field orientation="horizontal">
+                      <Checkbox
+                        id="vision"
+                        checked={field.value as boolean}
+                        onCheckedChange={field.onChange}
+                      />
+                      <FieldLabel htmlFor="vision" className="font-normal">
+                        视觉能力
+                      </FieldLabel>
+                    </Field>
+                  )}
                 />
-                <Label htmlFor="vision" className="text-sm">
-                  视觉能力
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="reasoning"
-                  checked={watch("capability.reasoning") as boolean}
-                  onCheckedChange={(checked: boolean) =>
-                    setValue("capability.reasoning", checked)
-                  }
+                <Controller
+                  name="capability.reasoning"
+                  control={control}
+                  render={({ field }) => (
+                    <Field orientation="horizontal">
+                      <Checkbox
+                        id="reasoning"
+                        checked={field.value as boolean}
+                        onCheckedChange={field.onChange}
+                      />
+                      <FieldLabel htmlFor="reasoning" className="font-normal">
+                        推理能力
+                      </FieldLabel>
+                    </Field>
+                  )}
                 />
-                <Label htmlFor="reasoning" className="text-sm">
-                  推理能力
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="tool_use"
-                  checked={watch("capability.tool_use") as boolean}
-                  onCheckedChange={(checked: boolean) =>
-                    setValue("capability.tool_use", checked)
-                  }
+                <Controller
+                  name="capability.tool_use"
+                  control={control}
+                  render={({ field }) => (
+                    <Field orientation="horizontal">
+                      <Checkbox
+                        id="tool_use"
+                        checked={field.value as boolean}
+                        onCheckedChange={field.onChange}
+                      />
+                      <FieldLabel htmlFor="tool_use" className="font-normal">
+                        工具调用
+                      </FieldLabel>
+                    </Field>
+                  )}
                 />
-                <Label htmlFor="tool_use" className="text-sm">
-                  工具调用
-                </Label>
               </div>
-            </div>
-          </SettingItem>
+            </Field>
+          </FieldGroup>
 
-          <DialogFooter className="mt-4">
+          <DialogFooter className="mt-6">
             <Button
               type="button"
               variant="outline"
@@ -164,7 +180,7 @@ export function ModelEditDialog({
               取消
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {buttonText}
+              {isSubmitting ? "保存中..." : "保存"}
             </Button>
           </DialogFooter>
         </form>
