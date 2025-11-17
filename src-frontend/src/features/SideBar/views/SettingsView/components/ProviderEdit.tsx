@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { createProvider, deleteProvider, updateProvider } from "@/api/provider";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeteteDialog";
 import { PasswordInput } from "@/components/Password";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DEFAULT_PROVIDER,
   PROVIDER_DEFAULT_URLS,
   PROVIDER_TYPE_LABELS,
 } from "@/constants/provider";
@@ -30,7 +32,6 @@ import type {
   ProviderType,
   ProviderUpdate,
 } from "@/types/provider";
-import { ConfirmDeleteDialog } from "../dialogs/ConfirmDeleteDialog";
 import { ModelList } from "./ModelList";
 
 const URL_REGEX = /^(https?:\/\/)([^\s/$.?#].[^\s]*)$/;
@@ -56,7 +57,9 @@ export function ProviderEdit({
     reset,
     formState: { isSubmitting },
     control,
-  } = useForm<ProviderCreate>();
+  } = useForm<ProviderCreate>({
+    defaultValues: DEFAULT_PROVIDER,
+  });
 
   useEffect(() => {
     reset({
@@ -329,7 +332,7 @@ export function ProviderEdit({
       </form>
 
       <ConfirmDeleteDialog
-        provider={provider}
+        description={`您确定要删除服务提供商 "${provider.name}" 吗？此操作无法撤销。`}
         isOpen={showDeleteDialog}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}

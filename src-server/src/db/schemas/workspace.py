@@ -1,5 +1,6 @@
-from . import DTOBase
+from __future__ import annotations
 from typing import TYPE_CHECKING
+from . import DTOBase
 
 if TYPE_CHECKING:
     from .agent import AgentRead

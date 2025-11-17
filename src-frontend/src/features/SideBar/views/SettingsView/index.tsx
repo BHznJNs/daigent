@@ -44,7 +44,7 @@ export function SettingsView() {
           <div className="flex-1" />
         </TabsList>
 
-        <ScrollArea className="max-h-full flex-1 px-4 py-2">
+        <ScrollArea className="max-h-full flex-1">
           {settingItems.map((item) => (
             <TabsContent key={item.id} value={item.id}>
               {item.content}

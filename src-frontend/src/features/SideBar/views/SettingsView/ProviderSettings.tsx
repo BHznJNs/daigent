@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { fetchProviders } from "@/api/provider";
+import { FailedToLoad } from "@/components/FailedToLoad";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
@@ -16,16 +16,22 @@ import {
   EmptyDescription,
   EmptyTitle,
 } from "@/components/ui/empty";
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
+} from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DEFAULT_PROVIDER, PROVIDER_TYPE_LABELS } from "@/constants/provider";
 import type { ProviderRead, ProviderType } from "@/types/provider";
 import { ProviderEdit } from "./components/ProviderEdit";
 
-type ProviderCardProps = {
+type ProviderItemProps = {
   provider: ProviderRead;
 };
 
-function ProviderCard({ provider }: ProviderCardProps) {
+function ProviderItem({ provider }: ProviderItemProps) {
   const [isOpen, setIsOpen] = useState(false);
   const PROVIDER_TYPE_COLORS: Record<ProviderType, string> = {
     openai: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
@@ -37,34 +43,36 @@ function ProviderCard({ provider }: ProviderCardProps) {
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
-        <div className="flex cursor-pointer items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-sm">{provider.name}</h3>
-            <Badge className={PROVIDER_TYPE_COLORS[provider.type]}>
-              {PROVIDER_TYPE_LABELS[provider.type]}
-            </Badge>
-            <span className="text-muted-foreground text-sm">
-              {provider.models.length} 个模型
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <ChevronDownIcon
-              className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
-            />
-          </div>
-        </div>
+        <Item
+          variant="outline"
+          size="sm"
+          className="flex cursor-pointer flex-nowrap rounded-none border-t-0 border-r-0 border-l-0 hover:bg-accent/30"
+        >
+          <ItemContent>
+            <ItemTitle>
+              {provider.name}
+              <Badge className={PROVIDER_TYPE_COLORS[provider.type]}>
+                {PROVIDER_TYPE_LABELS[provider.type]}
+              </Badge>
+            </ItemTitle>
+            <ItemDescription className="space-x-1">
+              <span className="text-muted-foreground text-sm">
+                {provider.models.length} 个模型
+              </span>
+            </ItemDescription>
+          </ItemContent>
+          <ChevronDownIcon
+            className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          />
+        </Item>
       </CollapsibleTrigger>
 
-      <CollapsibleContent className="mt-2">
-        <Card>
-          <CardContent>
-            <ProviderEdit
-              provider={provider}
-              onSuccess={() => setIsOpen(false)}
-              onCancel={() => setIsOpen(false)}
-            />
-          </CardContent>
-        </Card>
+      <CollapsibleContent className="mt-2 border-b px-4 py-2 pb-4">
+        <ProviderEdit
+          provider={provider}
+          onSuccess={() => setIsOpen(false)}
+          onCancel={() => setIsOpen(false)}
+        />
       </CollapsibleContent>
     </Collapsible>
   );
@@ -99,72 +107,68 @@ export function ProviderSettings() {
     data: providers = [],
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ["providers"],
     queryFn: fetchProviders,
   });
 
-  let content: React.ReactNode | null = null;
-
-  if (isLoading) {
-    content = <ProviderListSkeleton />;
-  }
-
-  if (error) {
-    content = (
-      <Empty>
-        <EmptyContent>
-          <EmptyTitle>加载失败</EmptyTitle>
-          <EmptyDescription>
-            无法加载服务提供商列表，请稍后重试。
-          </EmptyDescription>
-        </EmptyContent>
-      </Empty>
+  const content = (() => {
+    if (isLoading) {
+      return <ProviderListSkeleton />;
+    }
+    if (error) {
+      return (
+        <FailedToLoad
+          refetch={() => refetch()}
+          description="无法加载服务提供商列表，请稍后重试。"
+        />
+      );
+    }
+    if (providers.length === 0 && !showAddForm) {
+      return (
+        <Empty>
+          <EmptyContent>
+            <EmptyTitle>暂无模型服务</EmptyTitle>
+            <EmptyDescription>还没有配置任何服务提供商。</EmptyDescription>
+          </EmptyContent>
+        </Empty>
+      );
+    }
+    return (
+      <div className="flex-1 space-y-2">
+        {providers.map((provider) => (
+          <ProviderItem key={provider.id} provider={provider} />
+        ))}
+      </div>
     );
-  }
-
-  if (providers.length === 0 && !showAddForm) {
-    content = (
-      <Empty>
-        <EmptyContent>
-          <EmptyTitle>暂无模型服务</EmptyTitle>
-          <EmptyDescription>还没有配置任何服务提供商。</EmptyDescription>
-        </EmptyContent>
-      </Empty>
-    );
-  }
+  })();
 
   return (
-    <div className="flex flex-col py-2">
-      {content ?? (
-        <div className="flex-1 space-y-2">
-          {providers.map((provider) => (
-            <ProviderCard key={provider.id} provider={provider} />
-          ))}
-        </div>
-      )}
+    <div className="flex flex-col">
+      {content}
 
-      <div className="mt-4">
+      <div>
         {showAddForm ? (
-          <Card>
-            <CardContent>
-              <h3 className="mb-3 font-medium text-sm">添加服务提供商</h3>
-              <ProviderEdit
-                provider={DEFAULT_PROVIDER}
-                onSuccess={() => setShowAddForm(false)}
-                onCancel={() => setShowAddForm(false)}
-              />
-            </CardContent>
-          </Card>
+          <div className="p-4">
+            <h3 className="mb-3 font-medium text-sm">添加服务提供商</h3>
+            <ProviderEdit
+              provider={DEFAULT_PROVIDER}
+              onSuccess={() => setShowAddForm(false)}
+              onCancel={() => setShowAddForm(false)}
+            />
+          </div>
         ) : (
-          <Button
-            variant="secondary"
-            className="w-full"
-            onClick={() => setShowAddForm(true)}
-          >
-            <PlusIcon className="h-4 w-4" />
-            添加
-          </Button>
+          <div className="w-full p-4">
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => setShowAddForm(true)}
+            >
+              <PlusIcon className="h-4 w-4" />
+              添加
+            </Button>
+          </div>
         )}
       </div>
     </div>

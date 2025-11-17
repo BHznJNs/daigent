@@ -42,14 +42,6 @@ def create_workspace() -> FlaskResponse:
                                        .model_validate(new_workspace)
                                        .model_dump(mode="json")), 201
 
-@workspaces_bp.route("/<int:workspace_id>", methods=["GET"])
-def get_workspace(workspace_id: int) -> FlaskResponse:
-    with WorkspaceService() as service:
-        workspace = service.get_workspace(workspace_id)
-        return jsonify(workspace_schemas.WorkspaceRead
-                                        .model_validate(workspace)
-                                        .model_dump(mode="json"))
-
 @workspaces_bp.route("/<int:workspace_id>", methods=["PUT"])
 def update_workspace(workspace_id: int) -> FlaskResponse:
     with WorkspaceService() as service:

@@ -36,13 +36,23 @@ export function ModelEditDialog({
     reset,
     handleSubmit,
     formState: { isSubmitting },
-  } = useForm<LlmModelBase>();
+  } = useForm<LlmModelBase>({
+    defaultValues: {
+      name: "",
+      context_size: 128_000,
+      capability: {
+        vision: false,
+        reasoning: false,
+        tool_use: false,
+      },
+    },
+  });
 
   useEffect(() => {
     if (isOpen && model) {
       reset(model);
     }
-  }, [model, open]);
+  }, [model, isOpen]);
 
   const handleSubmitForm = (data: LlmModelBase) => {
     onConfirm(data);

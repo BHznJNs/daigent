@@ -49,6 +49,7 @@ pub fn run(args: Args) {
   tauri::Builder::default()
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_shell::init())
+    .plugin(tauri_plugin_dialog::init())
     .plugin(plugins::inject_vars::init(HashMap::from([
       ("dev", args.dev.to_string()),
       ("server_port", server_port.to_string()),

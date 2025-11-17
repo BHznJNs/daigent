@@ -34,16 +34,6 @@ class WorkspaceService:
             "total_pages": total_pages
         }
 
-    def get_workspace(self, id: int) -> workspace_models.Workspace:
-        stmt = select(workspace_models.Workspace).where(
-            workspace_models.Workspace.id == id
-        ).options(
-            selectinload(workspace_models.Workspace.usable_agents))
-        workspace = self._db_session.execute(stmt).scalar_one_or_none()
-        if not workspace:
-            raise WorkspaceNotFoundError(f"Workspace {id} not found")
-        return workspace
-
     def create_workspace(self, data: dict) -> workspace_models.Workspace:
         usable_agent_ids = data.pop("usable_agent_ids", None)
         new_workspace = workspace_models.Workspace(**data)

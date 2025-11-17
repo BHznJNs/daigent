@@ -21,7 +21,7 @@ export function GeneralSettings() {
   };
 
   return (
-    <>
+    <div className="px-4 py-2">
       <SettingItem title="主题">
         <Select value={config.theme} onValueChange={handleThemeChange}>
           <SelectTrigger className="w-32">
@@ -46,6 +46,6 @@ export function GeneralSettings() {
           </SelectContent>
         </Select>
       </SettingItem>
-    </>
+    </div>
   );
 }

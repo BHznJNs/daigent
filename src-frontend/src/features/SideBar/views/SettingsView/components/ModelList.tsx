@@ -7,6 +7,7 @@ import {
   ItemActions,
   ItemContent,
   ItemDescription,
+  ItemTitle,
 } from "@/components/ui/item";
 import { Label } from "@/components/ui/label";
 import type {
@@ -17,7 +18,7 @@ import type {
   ProviderRead,
 } from "@/types/provider";
 import { ModelEditDialog } from "../dialogs/ModelEditDialog";
-import { ModelSelectorDialog } from "../dialogs/ModelSelectorDialog";
+import { ModelSelectDialog } from "../dialogs/ModelSelectDialog";
 
 type LlmModel = LlmModelCreate | LlmModelUpdate;
 
@@ -58,9 +59,9 @@ function ModelItem({ model, index, onEdit, onDelete }: ModelItemProps) {
   return (
     <Item variant="outline" className="py-2">
       <ItemContent>
-        <span className="font-medium">{model.name}</span>
+        <ItemTitle>{model.name}</ItemTitle>
+        <ItemDescription>{capabilityBadges}</ItemDescription>
       </ItemContent>
-      <ItemDescription>{capabilityBadges}</ItemDescription>
       <ItemActions>
         <Button
           type="button"
@@ -165,7 +166,7 @@ export function ModelList({ models, onChange, provider }: ModelListProps) {
         </div>
       </div>
 
-      <ModelSelectorDialog
+      <ModelSelectDialog
         provider={provider}
         isOpen={showModelSelector}
         existingModels={models.map((model) => model.name)}

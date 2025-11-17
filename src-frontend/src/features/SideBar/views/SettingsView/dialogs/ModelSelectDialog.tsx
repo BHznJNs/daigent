@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { fetchProviderModels } from "@/api/llm";
+import { FailedToLoad } from "@/components/FailedToLoad";
+import { SelectionItem } from "@/components/SelectionItem";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -16,12 +17,11 @@ import {
   EmptyDescription,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Item, ItemActions, ItemContent } from "@/components/ui/item";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ProviderBase } from "@/types/provider";
 
-type ModelSelectorDialogProps = {
+type ModelSelectDialogProps = {
   provider: ProviderBase;
   isOpen: boolean;
   existingModels: string[];
@@ -29,7 +29,7 @@ type ModelSelectorDialogProps = {
   onConfirm: (selectedModels: string[]) => void;
 };
 
-function ModelSelectorSkeleton() {
+function ModelSelectSkeleton() {
   return (
     <div className="space-y-4">
       {Array.from({ length: 3 }).map((_, index) => (
@@ -56,20 +56,21 @@ function ModelSelectorSkeleton() {
   );
 }
 
-export function ModelSelectorDialog({
+export function ModelSelectDialog({
   provider,
   isOpen,
   existingModels: existingModelArr,
   onClose,
   onConfirm,
-}: ModelSelectorDialogProps) {
+}: ModelSelectDialogProps) {
   const existingModels = new Set(existingModelArr);
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
 
   const {
-    data: availableModels = [],
+    data: availableModels,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ["provider-models", provider.name, provider.base_url],
     queryFn: () =>
@@ -78,7 +79,13 @@ export function ModelSelectorDialog({
   });
 
   useEffect(() => {
-    if (availableModels.length > 0) {
+    if (isOpen) {
+      refetch();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (availableModels) {
       const validExistingModels = availableModels
         .map((model) => model.model_id)
         .filter((modelId) => existingModels.has(modelId));
@@ -106,25 +113,21 @@ export function ModelSelectorDialog({
     onClose();
   };
 
-  const renderContent = () => {
+  const content = () => {
     if (isLoading) {
-      return <ModelSelectorSkeleton />;
+      return <ModelSelectSkeleton />;
     }
 
     if (error) {
       return (
-        <Empty>
-          <EmptyContent>
-            <EmptyTitle>获取模型失败</EmptyTitle>
-            <EmptyDescription>
-              无法获取 {provider.name} 的模型列表，请稍后重试。
-            </EmptyDescription>
-          </EmptyContent>
-        </Empty>
+        <FailedToLoad
+          refetch={() => refetch()}
+          description={`无法获取 ${provider.name} 的模型列表，请稍后重试。`}
+        />
       );
     }
 
-    if (availableModels.length === 0) {
+    if (availableModels === undefined) {
       return (
         <Empty>
           <EmptyContent>
@@ -142,17 +145,13 @@ export function ModelSelectorDialog({
           const isSelected = selectedModels.includes(model_id);
 
           return (
-            <Item variant="outline" key={model_id}>
-              <ItemContent>
-                <span className="font-medium">{model_id}</span>
-              </ItemContent>
-              <ItemActions>
-                <Checkbox
-                  checked={isSelected}
-                  onCheckedChange={() => handleToggleModel(model_id)}
-                />
-              </ItemActions>
-            </Item>
+            <SelectionItem
+              key={model_id}
+              value={model_id}
+              label={model_id}
+              isSelected={isSelected}
+              handleToggle={handleToggleModel}
+            />
           );
         })}
       </div>
@@ -171,7 +170,7 @@ export function ModelSelectorDialog({
         </p>
 
         <ScrollArea className="mr-[-5px] h-[60vh] pr-[5px]">
-          {renderContent()}
+          {content()}
         </ScrollArea>
 
         <DialogFooter className="mt-4">

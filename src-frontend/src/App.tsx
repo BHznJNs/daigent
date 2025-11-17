@@ -15,7 +15,20 @@ import { useSidebarStore } from "./stores/sidebar-store";
 import { useTabsStore } from "./stores/tabs-store";
 
 function Layout() {
-  const DEFAULT_SIDEBAR_SIZE = 60;
+  const viewportWidth = window.innerWidth;
+  const VIEWPORT_SM_THRESHOLD = 800;
+  const VIEWPORT_MD_THRESHOLD = 1024;
+  const DEFAULT_SIDEBAR_SIZE = (() => {
+    if (viewportWidth < VIEWPORT_SM_THRESHOLD) {
+      return 50;
+    }
+    if (viewportWidth < VIEWPORT_MD_THRESHOLD) {
+      return 45;
+    }
+    return 35;
+  })();
+  const DEFAULT_MAIN_SIZE = 100 - DEFAULT_SIDEBAR_SIZE;
+
   const { addTab } = useTabsStore();
   const { isOpen, openSidebar, closeSidebar } = useSidebarStore();
   const [isDragging, setIsDragging] = useState(false);
@@ -55,7 +68,7 @@ function Layout() {
           <SideBar />
         </ResizablePanel>
         <ResizableHandle onDragging={setIsDragging} />
-        <ResizablePanel defaultSize={60} minSize={20}>
+        <ResizablePanel defaultSize={DEFAULT_MAIN_SIZE} minSize={20}>
           <Tabs />
         </ResizablePanel>
       </ResizablePanelGroup>
