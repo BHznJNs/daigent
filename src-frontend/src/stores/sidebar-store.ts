@@ -1,7 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type View = "tasks" | "workspaces" | "agents" | "plugins" | "settings";
+export type View =
+  | "tasks"
+  | "workspaces"
+  | "agents"
+  | "tools"
+  | "plugins"
+  | "settings";
 
 type SidebarState = {
   isOpen: boolean;

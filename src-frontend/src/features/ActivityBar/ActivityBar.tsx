@@ -2,6 +2,7 @@ import {
   BlocksIcon,
   BotMessageSquareIcon,
   FoldersIcon,
+  HammerIcon,
   LayoutListIcon,
   SettingsIcon,
 } from "lucide-react";
@@ -29,6 +30,11 @@ const topViews: { id: View; title: string; icon: React.ReactNode }[] = [
     id: "agents",
     title: "Agents",
     icon: <BotMessageSquareIcon />,
+  },
+  {
+    id: "tools",
+    title: "Tools",
+    icon: <HammerIcon />,
   },
   {
     id: "plugins",

@@ -8,12 +8,14 @@ import { AgentsView } from "./views/AgentsView";
 import { PluginsView } from "./views/PluginsView";
 import { SettingsView } from "./views/SettingsView";
 import { TasksView } from "./views/TasksView";
+import { ToolsView } from "./views/ToolsView";
 import { WorkspacesView } from "./views/WorkspacesView";
 
 const viewComponents = {
   tasks: TasksView,
   workspaces: WorkspacesView,
   agents: AgentsView,
+  tools: ToolsView,
   plugins: PluginsView,
   settings: SettingsView,
 };
