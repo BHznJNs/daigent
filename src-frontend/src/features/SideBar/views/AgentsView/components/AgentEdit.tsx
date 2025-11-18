@@ -134,10 +134,12 @@ export function AgentEdit({ agent, onSuccess, onCancel }: AgentEditProps) {
               <div className="flex justify-between">
                 <FieldLabel>关联模型</FieldLabel>
                 <ModelSelectDialog
-                  selectedModelId={modelId}
+                  selectedModelId={field.value}
                   onConfirm={field.onChange}
                 >
-                  <Button variant="outline">{model?.name}</Button>
+                  <Button variant="outline">
+                    {field.value ? model?.name : "选择模型"}
+                  </Button>
                 </ModelSelectDialog>
               </div>
               <FieldError errors={errors.model_id ? [errors.model_id] : []} />

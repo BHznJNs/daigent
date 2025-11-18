@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/empty";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { ProviderRead } from "@/types/provider";
 
 type ModelSelectDialogProps = {
   children: React.ReactNode;
@@ -42,6 +43,36 @@ function ModelListSkeleton() {
         </div>
       ))}
     </div>
+  );
+}
+
+function ProviderCard(
+  index: number,
+  provider: ProviderRead,
+  tempSelectedModelId: number | null,
+  handleModelClick: (modelId: number) => void
+) {
+  return (
+    <Card className="bg-card/33" key={index}>
+      <CardHeader>
+        <CardTitle>{provider.name}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {provider.models.map((model) => {
+          const isSelected = tempSelectedModelId === model.id;
+          return (
+            <SelectionItem
+              key={model.id}
+              className="bg-card"
+              value={model.id}
+              label={model.name}
+              isSelected={isSelected}
+              handleToggle={handleModelClick}
+            />
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -108,27 +139,9 @@ export function ModelSelectDialog({
 
     return (
       <ScrollArea className="max-h-[60vh]">
-        {providers.map((provider, index) => (
-          <Card key={index}>
-            <CardHeader>
-              <CardTitle>{provider.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {provider.models.map((model) => {
-                const isSelected = tempSelectedModelId === model.id;
-                return (
-                  <SelectionItem
-                    key={model.id}
-                    value={model.id}
-                    label={model.name}
-                    isSelected={isSelected}
-                    handleToggle={handleModelClick}
-                  />
-                );
-              })}
-            </CardContent>
-          </Card>
-        ))}
+        {providers.map((provider, index) =>
+          ProviderCard(index, provider, tempSelectedModelId, handleModelClick)
+        )}
       </ScrollArea>
     );
   })();
