@@ -19,14 +19,15 @@ import {
   Item,
   ItemContent,
   ItemDescription,
+  ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DEFAULT_AGENT } from "@/constants/agent";
 import type { AgentRead } from "@/types/agent";
 import { SideBarHeader } from "../../SideBar";
 import { AgentEdit } from "./components/AgentEdit";
-import { AgentListSkeleton } from "./components/AgentListSkeleton";
 
 type AgentItemProps = {
   agent: AgentRead;
@@ -49,6 +50,7 @@ function AgentItem({ agent }: AgentItemProps) {
           size="sm"
           className="flex cursor-pointer flex-nowrap rounded-none border-t-0 border-r-0 border-l-0 hover:bg-accent/30"
         >
+          {/* TODO: add agent icon and agent icon selecting feature */}
           <ItemContent>
             <ItemTitle>{agent.name}</ItemTitle>
             <ItemDescription>
@@ -68,6 +70,30 @@ function AgentItem({ agent }: AgentItemProps) {
         />
       </CollapsibleContent>
     </Collapsible>
+  );
+}
+
+function AgentListSkeleton() {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <Item
+          key={`agent-skeleton-${Date.now()}-${index}`}
+          variant="outline"
+          size="sm"
+        >
+          <ItemMedia variant="icon">
+            <Skeleton className="size-4" />
+          </ItemMedia>
+          <ItemContent>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+          </ItemContent>
+        </Item>
+      ))}
+    </div>
   );
 }
 

@@ -11,6 +11,7 @@ type ConfigStore = {
 const DEFAULT_CONFIG: AppConfig = {
   theme: "system",
   language: "en",
+  currentWorkspaceId: null,
 };
 
 export const useConfigStore = create<ConfigStore>()(

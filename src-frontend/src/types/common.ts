@@ -5,6 +5,7 @@ export const LanguageSchema = z.enum(["en", "zh_CN"]);
 export const AppConfigSchema = z.object({
   theme: AppThemeSchema,
   language: LanguageSchema,
+  currentWorkspaceId: z.number().nullable(),
 });
 export type AppTheme = z.infer<typeof AppThemeSchema>;
 export type Language = z.infer<typeof LanguageSchema>;

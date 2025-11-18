@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_AGENT } from "@/constants/agent";
 import type { AgentCreate, AgentRead } from "@/types/agent";
-import { ModelSelectDialog } from "./ModelSelectDialog";
+import { ModelSelectDialog } from "../dialogs/ModelSelectDialog";
 
 type AgentEditProps = {
   agent: AgentRead | AgentCreate;

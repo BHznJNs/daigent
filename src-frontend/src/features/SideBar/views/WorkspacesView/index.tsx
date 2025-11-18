@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/item";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DEFAULT_WORKSPACE } from "@/constants/workspace";
+import { useConfigStore } from "@/stores/config-store";
 import type { WorkspaceRead } from "@/types/workspace";
 import { SideBarHeader } from "../../SideBar";
 import { WorkspaceEdit } from "./components/WorkspaceEdit";
@@ -31,37 +32,59 @@ import { WorkspaceListSkeleton } from "./components/WorkspaceListSkeleton";
 
 type WorkspaceItemProps = {
   workspace: WorkspaceRead;
-  onClick?: () => void;
+  isSelected: boolean;
+  onSelect: (workspaceId: number) => void;
 };
 
-function WorkspaceItem({ workspace }: WorkspaceItemProps) {
+function WorkspaceItem({
+  workspace,
+  isSelected,
+  onSelect,
+}: WorkspaceItemProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { config, setPartialConfig } = useConfigStore();
+
+  const handleSelect = () => {
+    onSelect(workspace.id);
+  };
+
+  const handleToggleEdit = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const handleDelete = () => {
+    if (workspace.id === config.currentWorkspaceId) {
+      setPartialConfig({ currentWorkspaceId: null });
+    }
+  };
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger asChild>
-        <Item
-          variant="outline"
-          size="sm"
-          className="flex cursor-pointer flex-nowrap rounded-none border-t-0 border-r-0 border-l-0 hover:bg-accent/30"
-        >
-          <ItemMedia variant="icon">
-            <FolderIcon className="size-4" />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>{workspace.name}</ItemTitle>
-            <ItemDescription>{workspace.directory}</ItemDescription>
-          </ItemContent>
+      <Item
+        variant="outline"
+        size="sm"
+        className="flex cursor-pointer flex-nowrap rounded-none border-t-0 border-r-0 border-l-0 hover:bg-accent/30"
+        onClick={handleSelect}
+      >
+        <ItemMedia variant="icon">
+          <FolderIcon fill={isSelected ? "#fff" : "none"} className="size-4" />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle>{workspace.name}</ItemTitle>
+          <ItemDescription>{workspace.directory}</ItemDescription>
+        </ItemContent>
+        <CollapsibleTrigger asChild onClick={handleToggleEdit}>
           <ChevronDownIcon
-            className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={`h-4 w-4 cursor-pointer rounded transition-transform hover:bg-accent/50 ${isOpen ? "rotate-180" : ""}`}
           />
-        </Item>
-      </CollapsibleTrigger>
+        </CollapsibleTrigger>
+      </Item>
       <CollapsibleContent>
         <WorkspaceEdit
           workspace={workspace}
-          onSuccess={() => setIsOpen(false)}
+          onConfirm={() => setIsOpen(false)}
           onCancel={() => setIsOpen(false)}
+          onDelete={handleDelete}
         />
       </CollapsibleContent>
     </Collapsible>
@@ -70,10 +93,15 @@ function WorkspaceItem({ workspace }: WorkspaceItemProps) {
 
 export function WorkspacesView() {
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const { config, setPartialConfig } = useConfigStore();
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["workspaces"],
     queryFn: () => fetchWorkspaces(1, 20),
   });
+
+  const handleSelectWorkspace = (workspaceId: number) => {
+    setPartialConfig({ currentWorkspaceId: workspaceId });
+  };
 
   const content = (() => {
     if (isLoading) {
@@ -100,7 +128,12 @@ export function WorkspacesView() {
     return (
       <ScrollArea className="flex-1">
         {data?.items.map((workspace) => (
-          <WorkspaceItem key={workspace.id} workspace={workspace} />
+          <WorkspaceItem
+            key={workspace.id}
+            workspace={workspace}
+            isSelected={workspace.id === config.currentWorkspaceId}
+            onSelect={handleSelectWorkspace}
+          />
         ))}
       </ScrollArea>
     );
@@ -135,7 +168,7 @@ export function WorkspacesView() {
         {showCreateForm && (
           <WorkspaceEdit
             workspace={DEFAULT_WORKSPACE}
-            onSuccess={() => setShowCreateForm(false)}
+            onConfirm={() => setShowCreateForm(false)}
             onCancel={() => setShowCreateForm(false)}
           />
         )}

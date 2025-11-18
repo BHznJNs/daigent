@@ -12,7 +12,6 @@ import { SideBar } from "./features/SideBar/SideBar";
 import { Tabs } from "./features/Tabs/Tabs";
 import { cn } from "./lib/utils";
 import { useSidebarStore } from "./stores/sidebar-store";
-import { useTabsStore } from "./stores/tabs-store";
 
 function Layout() {
   const viewportWidth = window.innerWidth;
@@ -29,16 +28,9 @@ function Layout() {
   })();
   const DEFAULT_MAIN_SIZE = 100 - DEFAULT_SIDEBAR_SIZE;
 
-  const { addTab } = useTabsStore();
   const { isOpen, openSidebar, closeSidebar } = useSidebarStore();
   const [isDragging, setIsDragging] = useState(false);
   const sideBarPanelRef = useRef<React.ElementRef<typeof Panel>>(null);
-
-  useEffect(() => {
-    for (let i = 1; i <= 10; i++) {
-      addTab({ id: `tab-${i}`, title: `Tab ${i}` });
-    }
-  }, [addTab]);
 
   useEffect(() => {
     if (isOpen) {

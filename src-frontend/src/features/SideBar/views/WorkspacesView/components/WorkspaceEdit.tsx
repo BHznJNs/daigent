@@ -23,16 +23,18 @@ import { AgentList } from "./AgentList";
 
 type WorkspaceEditProps = {
   workspace: WorkspaceRead | WorkspaceCreate;
-  onSuccess?: () => void;
+  onConfirm?: () => void;
   onCancel?: () => void;
+  onDelete?: () => void;
 };
 
 type FormValues = WorkspaceCreate;
 
 export function WorkspaceEdit({
   workspace,
-  onSuccess,
+  onConfirm,
   onCancel,
+  onDelete,
 }: WorkspaceEditProps) {
   const isEditMode = "id" in workspace;
   const queryClient = useQueryClient();
@@ -90,7 +92,7 @@ export function WorkspaceEdit({
       }
       toast.success("更新成功");
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-      onSuccess?.();
+      onConfirm?.();
     } catch (err) {
       toast.error((err as Error)?.message ?? "更新失败");
     }
@@ -107,7 +109,7 @@ export function WorkspaceEdit({
       await deleteWorkspace(workspace.id);
       toast.success("删除成功");
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-      onSuccess?.();
+      onDelete?.();
     } catch (err) {
       toast.error((err as Error)?.message ?? "删除失败");
     }
