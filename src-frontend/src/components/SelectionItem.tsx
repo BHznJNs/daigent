@@ -31,6 +31,7 @@ export function SelectionItem<V extends SelectionValue>({
       <ItemActions>
         <Checkbox
           checked={isSelected}
+          onClick={(e) => e.stopPropagation()}
           onCheckedChange={() => handleToggle(value)}
         />
       </ItemActions>
