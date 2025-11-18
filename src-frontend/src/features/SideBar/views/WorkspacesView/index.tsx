@@ -23,6 +23,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { DEFAULT_WORKSPACE } from "@/constants/workspace";
 import type { WorkspaceRead } from "@/types/workspace";
 import { SideBarHeader } from "../../SideBar";
 import { WorkspaceEdit } from "./components/WorkspaceEdit";
@@ -68,10 +69,10 @@ function WorkspaceItem({ workspace }: WorkspaceItemProps) {
 }
 
 export function WorkspacesView() {
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["workspaces"],
     queryFn: () => fetchWorkspaces(1, 20),
-    refetchOnWindowFocus: false,
   });
 
   const content = (() => {
@@ -105,6 +106,10 @@ export function WorkspacesView() {
     );
   })();
 
+  const handleCreateWorkspace = () => {
+    setShowCreateForm(true);
+  };
+
   return (
     <div className="flex h-full flex-col">
       <SideBarHeader
@@ -112,7 +117,12 @@ export function WorkspacesView() {
         actions={[
           {
             button: (
-              <Button variant="ghost" size="icon" className="size-8">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                onClick={handleCreateWorkspace}
+              >
                 <PlusIcon className="size-4" />
               </Button>
             ),
@@ -120,7 +130,16 @@ export function WorkspacesView() {
           },
         ]}
       />
-      <div className="flex-1">{content}</div>
+      <div className="flex-1">
+        {content}
+        {showCreateForm && (
+          <WorkspaceEdit
+            workspace={DEFAULT_WORKSPACE}
+            onSuccess={() => setShowCreateForm(false)}
+            onCancel={() => setShowCreateForm(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }

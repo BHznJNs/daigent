@@ -1,5 +1,5 @@
 import { Checkbox } from "./ui/checkbox";
-import { Item, ItemActions, ItemContent } from "./ui/item";
+import { Item, ItemActions, ItemContent, ItemTitle } from "./ui/item";
 
 type SelectionValue = string | number;
 type SelectionItemProps<V extends SelectionValue> = {
@@ -16,9 +16,14 @@ export function SelectionItem<V extends SelectionValue>({
   handleToggle,
 }: SelectionItemProps<V>) {
   return (
-    <Item variant="outline" key={value}>
+    <Item
+      variant="outline"
+      key={value}
+      className="cursor-pointer"
+      onClick={() => handleToggle(value)}
+    >
       <ItemContent>
-        <span className="font-medium">{label}</span>
+        <ItemTitle>{label}</ItemTitle>
       </ItemContent>
       <ItemActions>
         <Checkbox

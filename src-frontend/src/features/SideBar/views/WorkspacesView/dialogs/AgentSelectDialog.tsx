@@ -7,10 +7,12 @@ import { SelectionItem } from "@/components/SelectionItem";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Empty,
@@ -24,9 +26,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { AgentRead } from "@/types/agent";
 
 type AgentSelectDialogProps = {
-  isOpen: boolean;
+  children: React.ReactNode;
   existingAgents: AgentRead[];
-  onClose: () => void;
+  onCancel: () => void;
   onConfirm: (selectedAgents: AgentRead[]) => void;
 };
 
@@ -35,7 +37,6 @@ function AgentSelectSkeleton() {
     <div className="space-y-4">
       {Array.from({ length: 3 }).map((_, index) => (
         <div
-          // biome-ignore lint/suspicious/noArrayIndexKey: static component
           key={`skeleton-${index}`}
           className="flex items-center justify-between rounded-lg border p-3"
         >
@@ -56,13 +57,14 @@ function AgentSelectSkeleton() {
 }
 
 export function AgentSelectDialog({
-  isOpen,
+  children,
   existingAgents: existingAgentArr,
-  onClose,
+  onCancel,
   onConfirm,
 }: AgentSelectDialogProps) {
   const existingAgentIds = useRef<Set<number>>(new Set());
   const selectedAgentIds = useRef<Set<number>>(new Set());
+  const [isOpen, setIsOpen] = useState(false);
   const [selectedAgents, setSelectedAgents] = useState<AgentRead[]>([]);
 
   const {
@@ -90,6 +92,8 @@ export function AgentSelectDialog({
 
   useEffect(() => {
     if (isOpen) {
+      existingAgentIds.current.clear();
+      selectedAgentIds.current.clear();
       refetch();
     }
   }, [isOpen]);
@@ -126,12 +130,7 @@ export function AgentSelectDialog({
   const handleConfirm = () => {
     onConfirm(selectedAgents);
     setSelectedAgents([]);
-    onClose();
-  };
-
-  const handleClose = () => {
-    setSelectedAgents([]);
-    onClose();
+    setIsOpen(false);
   };
 
   const content = (() => {
@@ -186,7 +185,8 @@ export function AgentSelectDialog({
   })();
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="flex flex-col sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>选择可用 Agent</DialogTitle>
@@ -201,9 +201,11 @@ export function AgentSelectDialog({
         </ScrollArea>
 
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={handleClose}>
-            取消
-          </Button>
+          <DialogClose asChild>
+            <Button onClick={onCancel} variant="outline">
+              取消
+            </Button>
+          </DialogClose>
           <Button
             onClick={handleConfirm}
             disabled={selectedAgents.length === 0}

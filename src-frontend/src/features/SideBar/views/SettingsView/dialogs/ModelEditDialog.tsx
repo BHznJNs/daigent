@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Field,
@@ -19,17 +21,17 @@ import { Input } from "@/components/ui/input";
 import type { LlmModelBase } from "@/types/provider";
 
 type ModelEditDialogProps = {
+  children: React.ReactNode;
   model: LlmModelBase | null;
-  isOpen: boolean;
-  onClose: () => void;
   onConfirm: (model: LlmModelBase) => void;
+  onCancel?: () => void;
 };
 
 export function ModelEditDialog({
+  children,
   model,
-  isOpen,
-  onClose,
   onConfirm,
+  onCancel,
 }: ModelEditDialogProps) {
   const {
     control,
@@ -49,10 +51,10 @@ export function ModelEditDialog({
   });
 
   useEffect(() => {
-    if (isOpen && model) {
+    if (model) {
       reset(model);
     }
-  }, [model, isOpen]);
+  }, [model]);
 
   const handleSubmitForm = (data: LlmModelBase) => {
     onConfirm(data);
@@ -60,11 +62,12 @@ export function ModelEditDialog({
 
   const handleClose = () => {
     reset();
-    onClose();
+    onCancel?.();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog onOpenChange={(open) => !open && handleClose()}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{"编辑模型信息"}</DialogTitle>
@@ -186,14 +189,9 @@ export function ModelEditDialog({
           </FieldGroup>
 
           <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
-              取消
-            </Button>
+            <DialogClose asChild>
+              <Button variant="outline">取消</Button>
+            </DialogClose>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "保存中..." : "保存"}
             </Button>

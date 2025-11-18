@@ -34,7 +34,6 @@ export function SideBarHeader(propts: SideBarHeaderProps) {
       <span className="h-8 font-medium text-sm leading-8">{propts.title}</span>
       <div className="flex gap-2">
         {propts.actions.map(({ button, tooltip }, index) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: Not nessary to add a key for the static component.
           <Tooltip key={index} delayDuration={600}>
             <TooltipTrigger asChild>{button}</TooltipTrigger>
             <TooltipContent>{tooltip}</TooltipContent>

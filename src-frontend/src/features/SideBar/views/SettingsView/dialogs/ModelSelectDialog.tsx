@@ -6,10 +6,12 @@ import { SelectionItem } from "@/components/SelectionItem";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Empty,
@@ -22,11 +24,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { ProviderBase } from "@/types/provider";
 
 type ModelSelectDialogProps = {
+  children: React.ReactNode;
   provider: ProviderBase;
-  isOpen: boolean;
   existingModels: string[];
-  onClose: () => void;
-  onConfirm: (selectedModels: string[]) => void;
+  onCancel?: () => void;
+  onConfirm?: (selectedModels: string[]) => void;
 };
 
 function ModelSelectSkeleton() {
@@ -34,7 +36,6 @@ function ModelSelectSkeleton() {
     <div className="space-y-4">
       {Array.from({ length: 3 }).map((_, index) => (
         <div
-          // biome-ignore lint/suspicious/noArrayIndexKey: static component
           key={`skeleton-${index}`}
           className="flex items-center justify-between rounded-lg border p-3"
         >
@@ -57,12 +58,13 @@ function ModelSelectSkeleton() {
 }
 
 export function ModelSelectDialog({
+  children,
   provider,
-  isOpen,
   existingModels: existingModelArr,
-  onClose,
+  onCancel,
   onConfirm,
 }: ModelSelectDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const existingModels = new Set(existingModelArr);
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
 
@@ -103,14 +105,9 @@ export function ModelSelectDialog({
   };
 
   const handleConfirm = () => {
-    onConfirm(selectedModels);
+    setIsOpen(false);
+    onConfirm?.(selectedModels);
     setSelectedModels([]);
-    onClose();
-  };
-
-  const handleClose = () => {
-    setSelectedModels([]);
-    onClose();
   };
 
   const content = () => {
@@ -159,7 +156,8 @@ export function ModelSelectDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="flex flex-col sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>选择模型 - {provider.name}</DialogTitle>
@@ -174,9 +172,11 @@ export function ModelSelectDialog({
         </ScrollArea>
 
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={handleClose}>
-            取消
-          </Button>
+          <DialogClose asChild>
+            <Button onClick={onCancel} variant="outline">
+              取消
+            </Button>
+          </DialogClose>
           <Button
             onClick={handleConfirm}
             disabled={selectedModels.length === 0}

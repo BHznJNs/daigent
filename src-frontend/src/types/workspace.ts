@@ -14,8 +14,8 @@ export type WorkspaceCreate = WorkspaceBase & {
   usable_agent_ids: number[];
 };
 
-export type WorkspaceUpdate = {
-  name?: string;
-  directory?: string;
-  usable_agent_ids?: number[];
-};
+export type WorkspaceUpdate = Partial<
+  WorkspaceBase & {
+    usable_agent_ids: number[];
+  }
+>;

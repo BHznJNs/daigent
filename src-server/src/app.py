@@ -1,7 +1,7 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
-from .routes import workspaces_bp, providers_bp, llm_api_bp, agents_bp
+from .routes import workspaces_bp, providers_bp, llm_api_bp, llm_models_bp, agents_bp
 
 class App(Flask):
     def __init__(self):
@@ -17,6 +17,7 @@ class App(Flask):
             }), e.code
 
         self.register_blueprint(workspaces_bp, url_prefix="/api/workspaces")
-        self.register_blueprint(providers_bp, url_prefix="/api/providers")
-        self.register_blueprint(llm_api_bp, url_prefix="/api/llm")
         self.register_blueprint(agents_bp, url_prefix="/api/agents")
+        self.register_blueprint(providers_bp, url_prefix="/api/providers")
+        self.register_blueprint(llm_models_bp, url_prefix="/api/llm_models")
+        self.register_blueprint(llm_api_bp, url_prefix="/api/llm")

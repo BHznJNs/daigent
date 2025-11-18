@@ -53,6 +53,7 @@ ORM：SQLAlchemy + Alembic
 - **页面路由**: 在 `frontend/src/pages/` 新增组件即自动成为路由
 - **组件编写**: 统一使用 `function Component(props: Props) {}` 格式编写
   - **图标组件使用**: 统一使用 lucide-react 库提供的图标组件，且使用时需要带 `Icon` 后缀。（例如，使用 `Plus` 图标应该导入 `PlusIcon`）
+  - **dialog 组件使用**: 在创建 dialog 组件时，需要基于 shadcn 提供的 dialog 组件创建，同时必须使用 DialogTrigger 来控制 dialog 状态，不要在 dialog 组件外额外使用 useState 管理 dialog 状态
 - **错误处理**: 在出现错误时统一使用 toast 组件展示
 
 #### 后端代码风格
