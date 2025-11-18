@@ -4,8 +4,8 @@ import { Item, ItemActions, ItemContent, ItemTitle } from "./ui/item";
 
 type SelectionValue = string | number;
 type SelectionItemProps<V extends SelectionValue> = {
+  className?: string;
   value: V;
-  className: string;
   label: string;
   isSelected: boolean;
   handleToggle: (value: V) => void;

@@ -28,8 +28,8 @@ import type { AgentRead } from "@/types/agent";
 type AgentSelectDialogProps = {
   children: React.ReactNode;
   existingAgents: AgentRead[];
-  onCancel: () => void;
-  onConfirm: (selectedAgents: AgentRead[]) => void;
+  onCancel?: () => void;
+  onConfirm?: (selectedAgents: AgentRead[]) => void;
 };
 
 function AgentSelectSkeleton() {
@@ -128,7 +128,7 @@ export function AgentSelectDialog({
   };
 
   const handleConfirm = () => {
-    onConfirm(selectedAgents);
+    onConfirm?.(selectedAgents);
     setSelectedAgents([]);
     setIsOpen(false);
   };
