@@ -32,8 +32,8 @@ const topViews: { id: View; title: string; icon: React.ReactNode }[] = [
     icon: <BotMessageSquareIcon />,
   },
   {
-    id: "tools",
-    title: "Tools",
+    id: "toolsets",
+    title: "ToolSets",
     icon: <HammerIcon />,
   },
   {

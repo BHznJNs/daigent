@@ -44,8 +44,9 @@ function WorkspaceItem({
   const [isOpen, setIsOpen] = useState(false);
   const { config, setPartialConfig } = useConfigStore();
 
-  const handleSelect = () => {
+  const handleSelect = (e: React.MouseEvent) => {
     onSelect(workspace.id);
+    e.stopPropagation();
   };
 
   const handleToggleEdit = () => {
@@ -64,9 +65,9 @@ function WorkspaceItem({
         variant="outline"
         size="sm"
         className="flex cursor-pointer flex-nowrap rounded-none border-t-0 border-r-0 border-l-0 hover:bg-accent/30"
-        onClick={handleSelect}
+        onClick={handleToggleEdit}
       >
-        <ItemMedia variant="icon">
+        <ItemMedia variant="icon" onClick={handleSelect}>
           <FolderIcon
             fill={isSelected ? "currentColor" : "none"}
             className="size-4"
@@ -76,7 +77,7 @@ function WorkspaceItem({
           <ItemTitle>{workspace.name}</ItemTitle>
           <ItemDescription>{workspace.directory}</ItemDescription>
         </ItemContent>
-        <CollapsibleTrigger asChild onClick={handleToggleEdit}>
+        <CollapsibleTrigger asChild>
           <ChevronDownIcon
             className={`h-4 w-4 cursor-pointer rounded transition-transform hover:bg-accent/50 ${isOpen ? "rotate-180" : ""}`}
           />

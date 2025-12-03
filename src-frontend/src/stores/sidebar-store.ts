@@ -5,7 +5,7 @@ export type View =
   | "tasks"
   | "workspaces"
   | "agents"
-  | "tools"
+  | "toolsets"
   | "plugins"
   | "settings";
 

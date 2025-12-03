@@ -3,22 +3,22 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useSidebarStore } from "@/stores/sidebar-store";
+import { useSidebarStore, type View } from "@/stores/sidebar-store";
 import { AgentsView } from "./views/AgentsView";
 import { PluginsView } from "./views/PluginsView";
 import { SettingsView } from "./views/SettingsView";
 import { TasksView } from "./views/TasksView";
-import { ToolsView } from "./views/ToolsView";
+import { ToolsetsView } from "./views/ToolsetsView";
 import { WorkspacesView } from "./views/WorkspacesView";
 
 const viewComponents = {
   tasks: TasksView,
   workspaces: WorkspacesView,
   agents: AgentsView,
-  tools: ToolsView,
+  toolsets: ToolsetsView,
   plugins: PluginsView,
   settings: SettingsView,
-};
+} satisfies Record<View, React.ComponentType>;
 
 type SideBarHeaderProps = {
   title: string;
