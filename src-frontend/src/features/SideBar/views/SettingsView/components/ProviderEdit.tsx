@@ -27,9 +27,9 @@ import {
 } from "@/constants/provider";
 import type {
   LlmModelCreate,
+  LlmProviders,
   ProviderCreate,
   ProviderRead,
-  ProviderType,
   ProviderUpdate,
 } from "@/types/provider";
 import { ModelList } from "./ModelList";
@@ -136,7 +136,7 @@ export function ProviderEdit({
     }
   };
 
-  const handleTypeChange = (value: ProviderType) => {
+  const handleTypeChange = (value: LlmProviders) => {
     if (!(value in PROVIDER_DEFAULT_URLS)) {
       return;
     }

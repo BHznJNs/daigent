@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DEFAULT_PROVIDER, PROVIDER_TYPE_LABELS } from "@/constants/provider";
-import type { ProviderRead, ProviderType } from "@/types/provider";
+import type { LlmProviders, ProviderRead } from "@/types/provider";
 import { ProviderEdit } from "./components/ProviderEdit";
 
 type ProviderItemProps = {
@@ -33,7 +33,7 @@ type ProviderItemProps = {
 
 function ProviderItem({ provider }: ProviderItemProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const PROVIDER_TYPE_COLORS: Record<ProviderType, string> = {
+  const PROVIDER_TYPE_COLORS: Record<LlmProviders, string> = {
     openai: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
     anthropic: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
     gemini:

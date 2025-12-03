@@ -15,7 +15,7 @@ class TaskType(enum.Enum):
 @dataclasses.dataclass
 class TaskMessage:
     id: int
-    role: Literal["user", "assistant", "tool"]
+    role: Literal["user", "assistant", "system", "tool"]
     content: str
     metadata: dict[str, str]
 

@@ -1,5 +1,5 @@
 from . import DTOBase
-from ..models.provider import ProviderType, LlmModelCapability
+from ..models.provider import LlmProviders, LlmModelCapability
 
 class LlmModelBase(DTOBase):
     name: str
@@ -21,7 +21,7 @@ class LlmModelUpdate(DTOBase):
 
 class ProviderBase(DTOBase):
     name: str
-    type: ProviderType
+    type: LlmProviders
     base_url: str
     api_key: str
 
@@ -34,7 +34,7 @@ class ProviderCreate(ProviderBase):
 
 class ProviderUpdate(DTOBase):
     name: str | None = None
-    type: ProviderType | None = None
+    type: LlmProviders | None = None
     base_url: str | None = None
     api_key: str | None = None
     models: list[LlmModelUpdate | LlmModelCreate] | None = None

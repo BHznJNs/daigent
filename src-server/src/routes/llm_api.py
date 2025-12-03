@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from any_llm.api import list_models
+from liteai_sdk import LLM, LlmProviders
 from .utils import FlaskResponse
 
 llm_api_bp = Blueprint("llm_api", __name__)
@@ -10,11 +10,13 @@ def fetch_models() -> FlaskResponse:
     base_url = body.get("base_url")
     api_key = body.get("api_key")
     provider_type = body.get("type")
-    if provider_type not in ["openai", "gemini", "anthropic"]:
+    try:
+        provider_type = LlmProviders(provider_type)
+    except ValueError:
         return jsonify({"error": "Invalid provider type"}), 400
 
-    models = list_models(
+    llm = LLM(
         provider=provider_type,
-        api_base=base_url,
+        base_url=base_url,
         api_key=api_key)
-    return jsonify([model.model_dump() for model in models])
+    return jsonify(llm.list_models())

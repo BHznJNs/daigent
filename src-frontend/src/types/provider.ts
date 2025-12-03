@@ -1,10 +1,10 @@
-export const ProviderType = {
+export const LlmProviders = {
   OPENAI: "openai",
   ANTHROPIC: "anthropic",
   GEMINI: "gemini",
 } as const;
 
-export type ProviderType = (typeof ProviderType)[keyof typeof ProviderType];
+export type LlmProviders = (typeof LlmProviders)[keyof typeof LlmProviders];
 
 export type LlmModelCapability = {
   vision: boolean;
@@ -24,7 +24,7 @@ export type LlmModelUpdate = LlmModelRead;
 
 export type ProviderBase = {
   name: string;
-  type: ProviderType;
+  type: LlmProviders;
   base_url: string;
   api_key: string;
 };

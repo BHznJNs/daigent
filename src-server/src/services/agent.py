@@ -1,16 +1,13 @@
 from werkzeug.exceptions import HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
-from ..db import SessionLocal
+from .ServiceBase import ServiceBase
 from ..db.models import agent as agent_models
 from ..db.models import workspace as workspace_models
 
 class AgentNotFoundError(HTTPException): pass
 
-class AgentService:
-    def __init__(self):
-        self._db_session = SessionLocal()
-
+class AgentService(ServiceBase):
     def get_agents(self, page: int = 1, per_page: int = 10) -> dict:
         if page < 1: page = 1
         if per_page < 5 or per_page > 100: per_page = 10
@@ -34,6 +31,13 @@ class AgentService:
             "per_page": per_page,
             "total_pages": total_pages
         }
+
+    def get_agent_by_id(self, id: int) -> agent_models.Agent | None:
+        return self._db_session.get(
+            agent_models.Agent,
+            id,
+            options=[selectinload(agent_models.Agent.model),
+                     selectinload(agent_models.Agent.workspaces)])
 
     def create_agent(self, data: dict) -> agent_models.Agent:
         workspace_ids = data.pop("workspace_ids", None)
@@ -93,9 +97,3 @@ class AgentService:
         except Exception as e:
             self._db_session.rollback()
             raise e
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self._db_session.close()

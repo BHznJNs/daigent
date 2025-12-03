@@ -1,7 +1,7 @@
-import enum
 import dataclasses
 from sqlalchemy import ForeignKey, event, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship, sessionmaker
+from liteai_sdk import LlmProviders
 from . import Base
 from .utils import DataClassJSON
 
@@ -21,16 +21,11 @@ class LlmModel(Base):
     provider = relationship("Provider", back_populates="models")
     agents = relationship("Agent", back_populates="model")
 
-class ProviderType(enum.Enum):
-    OPENAI = "openai"
-    ANTHROPIC = "anthropic"
-    GEMINI = "gemini"
-
 class Provider(Base):
     __tablename__ = "providers"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
-    type: Mapped[ProviderType]
+    type: Mapped[LlmProviders]
     base_url: Mapped[str]
     api_key: Mapped[str]
     models = relationship("LlmModel", back_populates="provider", cascade="all, delete-orphan")
@@ -40,7 +35,7 @@ def _insert_initial_values(target, connection, **kw):
     Session = sessionmaker(bind=connection)
     default_provider = Provider(
         name="OpenAI",
-        type=ProviderType.OPENAI,
+        type=LlmProviders.OPENAI,
         base_url="https://api.openai.com/v1",
         api_key="sk-",
         models=[

@@ -1,16 +1,13 @@
 from werkzeug.exceptions import HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
-from ..db import SessionLocal
+from .ServiceBase import ServiceBase
 from ..db.models import workspace as workspace_models
 from ..db.models import agent as agent_models
 
 class WorkspaceNotFoundError(HTTPException): pass
 
-class WorkspaceService:
-    def __init__(self):
-        self._db_session = SessionLocal()
-
+class WorkspaceService(ServiceBase):
     def get_workspaces(self, page: int = 1, per_page: int = 10) -> dict:
         if page < 1: page = 1
         if per_page < 5 or per_page > 100: per_page = 10
@@ -33,6 +30,12 @@ class WorkspaceService:
             "per_page": per_page,
             "total_pages": total_pages
         }
+
+    def get_workspace_by_id(self, id: int) -> workspace_models.Workspace | None:
+        return self._db_session.get(
+            workspace_models.Workspace,
+            id,
+            options=[selectinload(workspace_models.Workspace.usable_agents)])
 
     def create_workspace(self, data: dict) -> workspace_models.Workspace:
         usable_agent_ids = data.pop("usable_agent_ids", None)
@@ -92,9 +95,3 @@ class WorkspaceService:
         except Exception as e:
             self._db_session.rollback()
             raise e
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self._db_session.close()

@@ -88,9 +88,9 @@ export function ModelSelectDialog({
 
   useEffect(() => {
     if (availableModels) {
-      const validExistingModels = availableModels
-        .map((model) => model.model_id)
-        .filter((modelId) => existingModels.has(modelId));
+      const validExistingModels = availableModels.filter((modelId) =>
+        existingModels.has(modelId)
+      );
       setSelectedModels(validExistingModels);
     }
   }, [availableModels]);
@@ -137,15 +137,14 @@ export function ModelSelectDialog({
 
     return (
       <div className="space-y-3">
-        {availableModels.map((model) => {
-          const { model_id } = model;
-          const isSelected = selectedModels.includes(model_id);
+        {availableModels.map((modelId) => {
+          const isSelected = selectedModels.includes(modelId);
 
           return (
             <SelectionItem
-              key={model_id}
-              value={model_id}
-              label={model_id}
+              key={modelId}
+              value={modelId}
+              label={modelId}
               isSelected={isSelected}
               handleToggle={handleToggleModel}
             />

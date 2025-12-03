@@ -1,21 +1,23 @@
 from werkzeug.exceptions import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from ..db import SessionLocal
+from .ServiceBase import ServiceBase
 from ..db.models import provider as provider_models
 
 class ProviderNotFoundError(HTTPException): pass
-class ModelNotFoundError(HTTPException): pass
 
-class ProviderService:
-    def __init__(self):
-        self._db_session = SessionLocal()
-
+class ProviderService(ServiceBase):
     def get_providers(self) -> list[provider_models.Provider]:
         stmt = select(provider_models.Provider).options(
             selectinload(provider_models.Provider.models))
         providers = self._db_session.execute(stmt).scalars().all()
         return list(providers)
+
+    def get_provider_by_id(self, provider_id: int) -> provider_models.Provider | None:
+        return self._db_session.get(
+            provider_models.Provider,
+            provider_id,
+            options=[selectinload(provider_models.Provider.models)])
 
     def create_provider(self, data: dict) -> provider_models.Provider:
         models_data = data.pop("models", None)
@@ -94,9 +96,3 @@ class ProviderService:
         except Exception as e:
             self._db_session.rollback()
             raise e
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self._db_session.close()

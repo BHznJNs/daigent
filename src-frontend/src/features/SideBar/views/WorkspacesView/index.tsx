@@ -67,7 +67,10 @@ function WorkspaceItem({
         onClick={handleSelect}
       >
         <ItemMedia variant="icon">
-          <FolderIcon fill={isSelected ? "#fff" : "none"} className="size-4" />
+          <FolderIcon
+            fill={isSelected ? "currentColor" : "none"}
+            className="size-4"
+          />
         </ItemMedia>
         <ItemContent>
           <ItemTitle>{workspace.name}</ItemTitle>
