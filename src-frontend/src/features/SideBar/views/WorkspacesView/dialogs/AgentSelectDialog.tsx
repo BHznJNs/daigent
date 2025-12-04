@@ -159,7 +159,7 @@ export function AgentSelectDialog({
     }
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-2">
         <InfiniteScroll
           isLoading={isFetchingNextPage}
           hasMore={hasNextPage ?? false}
@@ -184,6 +184,8 @@ export function AgentSelectDialog({
     );
   })();
 
+  // TODO: agent search input
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -192,11 +194,7 @@ export function AgentSelectDialog({
           <DialogTitle>选择可用 Agent</DialogTitle>
         </DialogHeader>
 
-        <p className="mb-4 text-muted-foreground text-sm">
-          从可用 Agent 中选择需要添加的 Agent：
-        </p>
-
-        <ScrollArea className="mr-[-5px] h-[60vh] pr-[5px]">
+        <ScrollArea className="mr-[-5px] max-h-[60vh] pr-[5px]">
           {content}
         </ScrollArea>
 

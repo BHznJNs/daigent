@@ -27,6 +27,12 @@ export async function fetchWorkspaces(
   );
 }
 
+export async function fetchWorkspaceById(
+  workspaceId: number
+): Promise<WorkspaceRead> {
+  return await fetchApi<WorkspaceRead>(`${API_BASE}/workspaces/${workspaceId}`);
+}
+
 export async function createWorkspace(
   workspaceData: WorkspaceCreate
 ): Promise<WorkspaceRead> {

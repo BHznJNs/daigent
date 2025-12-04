@@ -116,7 +116,7 @@ export function AgentsView() {
         />
       );
     }
-    if (data?.items.length === 0) {
+    if (data?.items === undefined || data.items.length === 0) {
       return (
         <Empty>
           <EmptyContent>
@@ -172,3 +172,4 @@ export function AgentsView() {
     </div>
   );
 }
+AgentsView.componentId = "agents";

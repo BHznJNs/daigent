@@ -5,11 +5,11 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { applyTheme } from "@/lib/applyTheme";
 import { useConfigStore } from "@/stores/config-store";
-import { applyTheme } from "@/utils/applyTheme";
 import { ActivityBar } from "./features/ActivityBar/ActivityBar";
 import { SideBar } from "./features/SideBar/SideBar";
-import { Tabs } from "./features/Tabs/Tabs";
+import { Tabs } from "./features/Tabs";
 import { cn } from "./lib/utils";
 import { useSidebarStore } from "./stores/sidebar-store";
 

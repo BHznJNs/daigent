@@ -55,3 +55,4 @@ export function SettingsView() {
     </div>
   );
 }
+SettingsView.componentId = "settings";

@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/item";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DEFAULT_WORKSPACE } from "@/constants/workspace";
-import { useConfigStore } from "@/stores/config-store";
+import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { WorkspaceRead } from "@/types/workspace";
 import { SideBarHeader } from "../../SideBar";
 import { WorkspaceEdit } from "./components/WorkspaceEdit";
@@ -32,19 +32,24 @@ import { WorkspaceListSkeleton } from "./components/WorkspaceListSkeleton";
 
 type WorkspaceItemProps = {
   workspace: WorkspaceRead;
+  disabled: boolean;
   isSelected: boolean;
   onSelect: (workspaceId: number) => void;
 };
 
 function WorkspaceItem({
   workspace,
+  disabled,
   isSelected,
   onSelect,
 }: WorkspaceItemProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { config, setPartialConfig } = useConfigStore();
+  const { currentWorkspace, setCurrentWorkspace } = useWorkspaceStore();
 
   const handleSelect = (e: React.MouseEvent) => {
+    if (disabled) {
+      return;
+    }
     onSelect(workspace.id);
     e.stopPropagation();
   };
@@ -53,21 +58,27 @@ function WorkspaceItem({
     setIsOpen(!isOpen);
   };
 
-  const handleDelete = () => {
-    if (workspace.id === config.currentWorkspaceId) {
-      setPartialConfig({ currentWorkspaceId: null });
+  const handleDelete = async () => {
+    if (workspace.id === currentWorkspace?.id) {
+      await setCurrentWorkspace(null);
     }
   };
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} disabled={disabled}>
       <Item
         variant="outline"
         size="sm"
         className="flex cursor-pointer flex-nowrap rounded-none border-t-0 border-r-0 border-l-0 hover:bg-accent/30"
         onClick={handleToggleEdit}
       >
-        <ItemMedia variant="icon" onClick={handleSelect}>
+        <ItemMedia
+          variant="icon"
+          role="button"
+          className={disabled ? "cursor-not-allowed opacity-50" : ""}
+          onClick={handleSelect}
+          aria-disabled={disabled}
+        >
           <FolderIcon
             fill={isSelected ? "currentColor" : "none"}
             className="size-4"
@@ -97,14 +108,18 @@ function WorkspaceItem({
 
 export function WorkspacesView() {
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const { config, setPartialConfig } = useConfigStore();
+  const {
+    currentWorkspace,
+    setCurrentWorkspace,
+    isLoading: isCurrentWorkspaceSetting,
+  } = useWorkspaceStore();
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["workspaces"],
     queryFn: () => fetchWorkspaces(1, 20),
   });
 
-  const handleSelectWorkspace = (workspaceId: number) => {
-    setPartialConfig({ currentWorkspaceId: workspaceId });
+  const handleSelectWorkspace = async (workspaceId: number) => {
+    await setCurrentWorkspace(workspaceId);
   };
 
   const content = (() => {
@@ -135,7 +150,8 @@ export function WorkspacesView() {
           <WorkspaceItem
             key={workspace.id}
             workspace={workspace}
-            isSelected={workspace.id === config.currentWorkspaceId}
+            disabled={isCurrentWorkspaceSetting}
+            isSelected={workspace.id === currentWorkspace?.id}
             onSelect={handleSelectWorkspace}
           />
         ))}
@@ -180,3 +196,4 @@ export function WorkspacesView() {
     </div>
   );
 }
+WorkspacesView.componentId = "workspaces";

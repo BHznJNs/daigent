@@ -1,24 +1,16 @@
+import { Activity } from "react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useSidebarStore, type View } from "@/stores/sidebar-store";
+import { useSidebarStore } from "@/stores/sidebar-store";
 import { AgentsView } from "./views/AgentsView";
 import { PluginsView } from "./views/PluginsView";
 import { SettingsView } from "./views/SettingsView";
 import { TasksView } from "./views/TasksView";
 import { ToolsetsView } from "./views/ToolsetsView";
 import { WorkspacesView } from "./views/WorkspacesView";
-
-const viewComponents = {
-  tasks: TasksView,
-  workspaces: WorkspacesView,
-  agents: AgentsView,
-  toolsets: ToolsetsView,
-  plugins: PluginsView,
-  settings: SettingsView,
-} satisfies Record<View, React.ComponentType>;
 
 type SideBarHeaderProps = {
   title: string;
@@ -51,11 +43,23 @@ export function SideBar() {
     return null;
   }
 
-  const ViewComponent = viewComponents[activeView];
-
   return (
     <div className="h-full bg-card">
-      <ViewComponent />
+      {[
+        TasksView,
+        WorkspacesView,
+        AgentsView,
+        ToolsetsView,
+        PluginsView,
+        SettingsView,
+      ].map((Component) => (
+        <Activity
+          key={Component.componentId}
+          mode={activeView === Component.componentId ? "visible" : "hidden"}
+        >
+          <Component />
+        </Activity>
+      ))}
     </div>
   );
 }

@@ -17,6 +17,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { AgentRead } from "@/types/agent";
 import type { WorkspaceCreate, WorkspaceRead } from "@/types/workspace";
 import { AgentList } from "./AgentList";
@@ -38,6 +39,8 @@ export function WorkspaceEdit({
 }: WorkspaceEditProps) {
   const isEditMode = "id" in workspace;
   const queryClient = useQueryClient();
+  const { currentWorkspace, setCurrentWorkspace, syncCurrentWorkspace } =
+    useWorkspaceStore();
   const [usableAgents, setUsableAgents] = useState(
     isEditMode ? workspace.usable_agents : []
   );
@@ -93,6 +96,9 @@ export function WorkspaceEdit({
       toast.success("更新成功");
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
       onConfirm?.();
+      if (isEditMode && workspace.id === currentWorkspace?.id) {
+        await syncCurrentWorkspace();
+      }
     } catch (err) {
       toast.error((err as Error)?.message ?? "更新失败");
     }
@@ -110,6 +116,9 @@ export function WorkspaceEdit({
       toast.success("删除成功");
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
       onDelete?.();
+      if (workspace.id === currentWorkspace?.id) {
+        await setCurrentWorkspace(null);
+      }
     } catch (err) {
       toast.error((err as Error)?.message ?? "删除失败");
     }
@@ -124,7 +133,7 @@ export function WorkspaceEdit({
   }
 
   return (
-    <form onSubmit={onSubmit} className="p-4">
+    <form onSubmit={onSubmit} className="border-b p-4">
       <FieldGroup>
         <Controller
           name="name"

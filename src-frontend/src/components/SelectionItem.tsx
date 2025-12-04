@@ -22,7 +22,7 @@ export function SelectionItem<V extends SelectionValue>({
     <Item
       variant="outline"
       key={value}
-      className={cn("cursor-pointer", className)}
+      className={cn("cursor-pointer py-3", className)}
       onClick={() => handleToggle(value)}
     >
       <ItemContent>
@@ -31,7 +31,7 @@ export function SelectionItem<V extends SelectionValue>({
       <ItemActions>
         <Checkbox
           checked={isSelected}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
           onCheckedChange={() => handleToggle(value)}
         />
       </ItemActions>

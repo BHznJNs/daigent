@@ -27,7 +27,9 @@ import {
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { type Tab, useTabsStore } from "@/stores/tabs-store";
+import { useTabsStore } from "@/stores/tabs-store";
+import type { Tab } from "@/types/tab";
+import { TaskPanel } from "./components/TaskPanel";
 
 function SortableTab({ tab }: { tab: Tab }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -61,7 +63,7 @@ function SortableTab({ tab }: { tab: Tab }) {
         key={tab.id}
         onMouseDown={(e) => handleMouseDown(e, tab.id)}
         className={cn(
-          "group flex min-w-24 shrink-0 cursor-pointer items-center justify-between gap-2 border-r border-b py-2 pr-2 pl-4 text-muted-foreground text-sm outline-0 transition-colors duration-200 ease-in-out",
+          "group flex min-w-24 shrink-0 cursor-pointer items-center justify-between gap-2 text-nowrap border-r border-b py-2 pr-2 pl-4 text-muted-foreground text-sm outline-0 transition-colors duration-200 ease-in-out",
           "hover:bg-muted/40 hover:text-primary",
           {
             "border-b-transparent bg-muted! text-primary!":
@@ -150,6 +152,7 @@ export function Tabs() {
       <ReactTabs
         selectedIndex={activeIndex}
         onSelect={handleTabSelect}
+        forceRenderTabPanel={true}
         className="flex h-full flex-col"
         selectedTabPanelClassName="!block"
       >
@@ -181,7 +184,14 @@ export function Tabs() {
             }
             return tabs.map((tab) => (
               <ReactTabPanel key={tab.id} className="hidden h-full bg-muted">
-                <div className="p-4">{tab.title} Content</div>
+                {(() => {
+                  switch (tab.type) {
+                    case "task":
+                      return <TaskPanel tabData={tab} />;
+                    default:
+                      return null;
+                  }
+                })()}
               </ReactTabPanel>
             ));
           })()}

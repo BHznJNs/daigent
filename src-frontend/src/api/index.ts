@@ -1,6 +1,16 @@
 const port = globalThis.__INJECTED__.server_port;
 export const API_BASE = `http://localhost:${port}/api`;
 
+export class FetchError extends Error {
+  statusCode: number;
+
+  constructor(message: string, statusCode: number) {
+    super(message);
+    this.name = "FetchError";
+    this.statusCode = statusCode;
+  }
+}
+
 export async function fetchApi<T>(
   input: RequestInfo | URL,
   init?: RequestInit
@@ -18,5 +28,5 @@ export async function fetchApi<T>(
   } catch {
     errorMessage = res.statusText || `HTTP_${res.status}`;
   }
-  throw new Error(errorMessage);
+  throw new FetchError(errorMessage, res.status);
 }

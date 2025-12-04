@@ -23,7 +23,7 @@ class Task(Base):
     __tablename__ = "tasks"
     id: Mapped[int] = mapped_column(primary_key=True)
     type: Mapped[TaskType]
-    name: Mapped[str]
+    title: Mapped[str]
     messages: Mapped[list[TaskMessage]] = mapped_column(DataclassListJSON(TaskMessage))
     agent_id: Mapped[int] = mapped_column(ForeignKey(Agent.id, ondelete="SET NULL"), nullable=True)
     agent = relationship("Agent", back_populates="tasks")

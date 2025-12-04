@@ -29,6 +29,17 @@ def get_workspaces() -> FlaskResponse:
             "total_pages": result["total_pages"]
         })
 
+@workspaces_bp.route("/<int:workspace_id>", methods=["GET"])
+def get_workspace(workspace_id: int) -> FlaskResponse:
+    with WorkspaceService() as service:
+        workspace = service.get_workspace_by_id(workspace_id)
+        if not workspace:
+            return jsonify({"error": "Workspace not found"}), 404
+
+        return jsonify(workspace_schemas.WorkspaceRead
+                                       .model_validate(workspace)
+                                       .model_dump(mode="json"))
+
 @workspaces_bp.route("/", methods=["POST"])
 def create_workspace() -> FlaskResponse:
     with WorkspaceService() as service:
