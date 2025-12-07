@@ -1,6 +1,6 @@
 from werkzeug.exceptions import HTTPException
 from sqlalchemy import select, func
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, load_only
 from .ServiceBase import ServiceBase
 from ..db.models import task as task_models
 
@@ -9,7 +9,12 @@ class TaskNotFoundError(HTTPException):
 
 class TaskService(ServiceBase):
     def create_task(self, data: dict) -> task_models.Task:
-        new_task = task_models.Task(**data)
+        messages_raw = data.pop("messages")
+        messages = [
+            task_models.TaskMessage(**item)
+            for item in messages_raw
+        ]
+        new_task = task_models.Task(messages=messages, **data)
 
         try:
             self._db_session.add(new_task)
@@ -34,7 +39,8 @@ class TaskService(ServiceBase):
 
         stmt = base_query.options(
             selectinload(task_models.Task.agent),
-            selectinload(task_models.Task.workspace)
+            selectinload(task_models.Task.workspace),
+            load_only(task_models.Task.id, task_models.Task.type, task_models.Task.title, task_models.Task.agent_id, task_models.Task.workspace_id)
         ).order_by(task_models.Task.id.desc()).limit(per_page).offset(offset)
 
         tasks = self._db_session.execute(stmt).scalars().all()

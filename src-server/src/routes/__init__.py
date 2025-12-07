@@ -1,3 +1,4 @@
+from .task import tasks_bp
 from .workspace import workspaces_bp
 from .agent import agents_bp
 from .provider import providers_bp

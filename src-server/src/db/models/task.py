@@ -1,6 +1,5 @@
 import enum
 import dataclasses
-from typing import Literal
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from . import Base
@@ -8,14 +7,26 @@ from .agent import Agent
 from .workspace import Workspace
 from .utils import DataclassListJSON
 
-class TaskType(enum.Enum):
+class TaskType(str, enum.Enum):
     Agent = "agent"
     Orchestration = "orchestration"
 
+class MessageRole(str, enum.Enum):
+    User = "user"
+    Assistant = "assistant"
+    System = "system"
+    Tool = "tool"
+
 @dataclasses.dataclass
 class TaskMessage:
-    id: int
-    role: Literal["user", "assistant", "system", "tool"]
+    """
+    Metadata:
+    - For user messages, optional "files"
+    - For assistant messages, optional "reasoning_content"
+    - For system messages, no metadata
+    - For tool messages, "id", "name", "arguments"
+    """
+    role: MessageRole
     content: str
     metadata: dict[str, str]
 
