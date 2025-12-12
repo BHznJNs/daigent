@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_AGENT } from "@/constants/agent";
-import type { AgentCreate, AgentRead } from "@/types/agent";
+import type { AgentCreate, AgentRead, AgentUpdate } from "@/types/agent";
 import { ModelSelectDialog } from "../dialogs/ModelSelectDialog";
 
 type AgentEditProps = {
@@ -28,6 +28,7 @@ type FormValues = AgentCreate;
 
 export function AgentEdit({ agent, onSuccess, onCancel }: AgentEditProps) {
   const isEditMode = "id" in agent;
+  const queryClient = useQueryClient();
   const modelId = (isEditMode ? agent.model?.id : agent.model_id) ?? null;
   const { data: model } = useQuery({
     queryKey: ["llm_models", modelId],
@@ -38,10 +39,69 @@ export function AgentEdit({ agent, onSuccess, onCancel }: AgentEditProps) {
     handleSubmit,
     control,
     reset,
-    formState: { isSubmitting, errors },
+    formState: { errors },
   } = useForm<FormValues>({
     defaultValues: DEFAULT_AGENT,
   });
+
+  const createAgentMutation = useMutation({
+    mutationFn: createAgent,
+    onSuccess: (newAgent) => {
+      queryClient.invalidateQueries({ queryKey: ["agents"] });
+      toast.success("创建成功", {
+        description: `已成功创建 ${newAgent.name} Agent。`,
+      });
+      reset();
+      onSuccess?.();
+    },
+    onError: (error: Error) => {
+      toast.error("创建失败", {
+        description: error.message || "创建 Agent 时发生错误，请稍后重试。",
+      });
+    },
+  });
+
+  const updateAgentMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: AgentUpdate }) =>
+      updateAgent(id, data),
+    onSuccess: (updatedAgent) => {
+      queryClient.invalidateQueries({ queryKey: ["agents"] });
+      queryClient.invalidateQueries({
+        queryKey: ["llm_models", updatedAgent.model?.id],
+      });
+      toast.success("更新成功", {
+        description: `已成功更新 ${updatedAgent.name} Agent。`,
+      });
+      reset();
+      onSuccess?.();
+    },
+    onError: (error: Error) => {
+      toast.error("更新失败", {
+        description: error.message || "更新 Agent 时发生错误，请稍后重试。",
+      });
+    },
+  });
+
+  const deleteAgentMutation = useMutation({
+    mutationFn: deleteAgent,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agents"] });
+      toast.success("删除成功", {
+        description: "已成功删除 Agent。",
+      });
+      onSuccess?.();
+    },
+    onError: (error: Error) => {
+      toast.error("删除失败", {
+        description: error.message || "删除 Agent 时发生错误，请稍后重试。",
+      });
+    },
+  });
+
+  const isPending =
+    createAgentMutation.isPending ||
+    updateAgentMutation.isPending ||
+    deleteAgentMutation.isPending;
 
   useEffect(() => {
     reset({
@@ -51,44 +111,22 @@ export function AgentEdit({ agent, onSuccess, onCancel }: AgentEditProps) {
     });
   }, [agent, reset]);
 
-  const onSubmit = handleSubmit(async (data) => {
-    try {
-      if (isEditMode && "id" in agent) {
-        await updateAgent(agent.id, data);
-      } else {
-        await createAgent(data);
-      }
-      toast.success("保存成功");
-      onSuccess?.();
-    } catch (err) {
-      toast.error(
-        err && typeof err === "object" && "message" in err
-          ? (err.message as string)
-          : "保存失败"
-      );
+  const onSubmit = (data: FormValues) => {
+    if (isEditMode && "id" in agent) {
+      updateAgentMutation.mutate({ id: agent.id, data });
+    } else {
+      createAgentMutation.mutate(data);
     }
-  });
+  };
 
-  const handleDeleteConfirm = async () => {
-    if (!(isEditMode && "id" in agent)) {
-      return;
-    }
-
-    try {
-      await deleteAgent(agent.id);
-      toast.success("删除成功");
-      onSuccess?.();
-    } catch (err) {
-      toast.error(
-        err && typeof err === "object" && "message" in err
-          ? (err.message as string)
-          : "删除失败"
-      );
+  const handleDeleteConfirm = () => {
+    if (isEditMode && "id" in agent) {
+      deleteAgentMutation.mutate(agent.id);
     }
   };
 
   return (
-    <form onSubmit={onSubmit} className="p-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="p-4">
       <FieldGroup>
         <Controller
           name="name"
@@ -152,14 +190,10 @@ export function AgentEdit({ agent, onSuccess, onCancel }: AgentEditProps) {
             <ConfirmDeleteDialog
               description={`确定要删除 Agent "${agent.name}" 吗？此操作无法撤销。`}
               onConfirm={handleDeleteConfirm}
-              isDeleting={isSubmitting}
+              isDeleting={deleteAgentMutation.isPending}
             >
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={isSubmitting}
-              >
-                删除
+              <Button type="button" variant="destructive" disabled={isPending}>
+                {deleteAgentMutation.isPending ? "删除中..." : "删除"}
               </Button>
             </ConfirmDeleteDialog>
           )}
@@ -170,12 +204,12 @@ export function AgentEdit({ agent, onSuccess, onCancel }: AgentEditProps) {
               reset();
               onCancel?.();
             }}
-            disabled={isSubmitting}
+            disabled={isPending}
           >
             取消
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "保存中..." : "保存"}
+          <Button type="submit" disabled={isPending}>
+            {isPending ? "保存中..." : "保存"}
           </Button>
         </div>
       </FieldGroup>

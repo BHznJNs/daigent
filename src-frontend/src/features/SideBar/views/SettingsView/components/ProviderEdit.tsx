@@ -113,7 +113,7 @@ export function ProviderEdit({
   });
 
   const deleteProviderMutation = useMutation({
-    mutationFn: (id: number) => deleteProvider(id),
+    mutationFn: deleteProvider,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["providers"] });
       toast.success("删除成功", {

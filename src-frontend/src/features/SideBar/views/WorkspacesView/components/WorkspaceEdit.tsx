@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -50,7 +50,7 @@ export function WorkspaceEdit({
     control,
     setValue,
     reset,
-    formState: { isSubmitting, errors },
+    formState: { errors },
   } = useForm<FormValues>({
     defaultValues: {
       name: "",
@@ -69,7 +69,68 @@ export function WorkspaceEdit({
         usable_agent_ids: usableAgentsLocal.map((a) => a.id),
       });
     }
-  }, [workspace, reset]);
+  }, [workspace, reset, isEditMode]);
+
+  const createWorkspaceMutation = useMutation({
+    mutationFn: createWorkspace,
+    onSuccess: (newWorkspace) => {
+      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+      toast.success("创建成功", {
+        description: `已成功创建工作区 "${newWorkspace.name}"。`,
+      });
+      reset();
+      onConfirm?.();
+    },
+    onError: (error: Error) => {
+      toast.error("创建失败", {
+        description: error.message || "创建工作区时发生错误，请稍后重试。",
+      });
+    },
+  });
+
+  const updateWorkspaceMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: FormValues }) =>
+      updateWorkspace(id, data),
+    onSuccess: async (updatedWorkspace) => {
+      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+      toast.success("更新成功", {
+        description: `已成功更新工作区 "${updatedWorkspace.name}"。`,
+      });
+      reset();
+      onConfirm?.();
+
+      // 如果更新的是当前工作区，同步当前工作区状态
+      if (updatedWorkspace.id === currentWorkspace?.id) {
+        await syncCurrentWorkspace();
+      }
+    },
+    onError: (error: Error) => {
+      toast.error("更新失败", {
+        description: error.message || "更新工作区时发生错误，请稍后重试。",
+      });
+    },
+  });
+
+  const deleteWorkspaceMutation = useMutation({
+    mutationFn: deleteWorkspace,
+    onSuccess: async (_data, deletedId) => {
+      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+      toast.success("删除成功", {
+        description: "已成功删除工作区。",
+      });
+      onDelete?.();
+
+      // 如果删除的是当前工作区，清空当前工作区
+      if (deletedId === currentWorkspace?.id) {
+        await setCurrentWorkspace(null);
+      }
+    },
+    onError: (error: Error) => {
+      toast.error("删除失败", {
+        description: error.message || "删除工作区时发生错误，请稍后重试。",
+      });
+    },
+  });
 
   async function chooseDirectory() {
     try {
@@ -83,44 +144,17 @@ export function WorkspaceEdit({
     }
   }
 
-  const onSubmit = handleSubmit(async (data) => {
-    if (!workspace) {
-      return;
+  const onSubmit = (data: FormValues) => {
+    if (isEditMode) {
+      updateWorkspaceMutation.mutate({ id: workspace.id, data });
+    } else {
+      createWorkspaceMutation.mutate(data);
     }
-    try {
-      if (isEditMode) {
-        await updateWorkspace(workspace.id, data);
-      } else {
-        await createWorkspace(data);
-      }
-      toast.success("更新成功");
-      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-      onConfirm?.();
-      if (isEditMode && workspace.id === currentWorkspace?.id) {
-        await syncCurrentWorkspace();
-      }
-    } catch (err) {
-      toast.error((err as Error)?.message ?? "更新失败");
-    }
-  });
+  };
 
-  const handleDeleteConfirm = async () => {
-    if (!workspace) {
-      return;
-    }
-    if (!isEditMode) {
-      return;
-    }
-    try {
-      await deleteWorkspace(workspace.id);
-      toast.success("删除成功");
-      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-      onDelete?.();
-      if (workspace.id === currentWorkspace?.id) {
-        await setCurrentWorkspace(null);
-      }
-    } catch (err) {
-      toast.error((err as Error)?.message ?? "删除失败");
+  const handleDeleteConfirm = () => {
+    if ("id" in workspace) {
+      deleteWorkspaceMutation.mutate(workspace.id);
     }
   };
 
@@ -132,8 +166,13 @@ export function WorkspaceEdit({
     setUsableAgents(selectedAgents);
   }
 
+  const isLoading =
+    createWorkspaceMutation.isPending ||
+    updateWorkspaceMutation.isPending ||
+    deleteWorkspaceMutation.isPending;
+
   return (
-    <form onSubmit={onSubmit} className="border-b p-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="border-b p-4">
       <FieldGroup>
         <Controller
           name="name"
@@ -185,14 +224,10 @@ export function WorkspaceEdit({
             <ConfirmDeleteDialog
               description={`确定要删除工作区"${workspace?.name ?? ""}"吗？此操作无法撤销。`}
               onConfirm={handleDeleteConfirm}
-              isDeleting={isSubmitting}
+              isDeleting={deleteWorkspaceMutation.isPending}
             >
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={isSubmitting}
-              >
-                删除
+              <Button type="button" variant="destructive" disabled={isLoading}>
+                {deleteWorkspaceMutation.isPending ? "删除中..." : "删除"}
               </Button>
             </ConfirmDeleteDialog>
           )}
@@ -203,12 +238,17 @@ export function WorkspaceEdit({
               reset();
               onCancel?.();
             }}
-            disabled={isSubmitting}
+            disabled={isLoading}
           >
             取消
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "保存中..." : "保存"}
+          <Button type="submit" disabled={isLoading}>
+            {(() => {
+              if (isEditMode) {
+                return isLoading ? "保存中..." : "保存";
+              }
+              return isLoading ? "创建中..." : "创建";
+            })()}
           </Button>
         </div>
       </FieldGroup>

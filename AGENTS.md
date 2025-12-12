@@ -90,7 +90,8 @@ ORM：SQLAlchemy + Alembic
 编写样式时要合并 Tailwind CSS 类时使用 `cn()` 工具函数，已位于 `src/lib/utils.ts` 中。
 要使用图标时从 `lucide-react` 库中，统一用 `import { IconName } from "lucide-react"` 进行导入。
 使用 `zustand` 库进行状态管理，全局 store 放在 `frontend/src/stores/xxxStore.ts` 中。
-在进行 API 请求时，需要在 `frontend/src/api` 目录下创建新的 API 文件，并使用 `@tanstack/react-query` 来管理请求状态。API 方法统一使用 `function` 关键字定义。
+在进行 API 请求时，需要在 `frontend/src/api` 目录下创建新的 API 文件，API 方法统一使用 `function` 关键字定义。
+在调用 API 方法时，对于从后端拉取状态的方法，使用 `@tanstack/react-query` 的 `useQuery` 来管理请求状态；对于需要修改后端状态的方法，使用 `@tanstack/react-query` 的 `useMutation` 来管理请求状态。
 在需要创建表单时，使用 `react-hook-form` 库来辅助创建，并使用 shadcn-ui 提供的 Field 组件来辅助构建表单组件。
 
 如果遇到 CSS 类顺序错误请直接忽略。用户会在开发完成后一并解决。

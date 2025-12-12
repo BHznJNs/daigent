@@ -9,10 +9,7 @@ interface PasswordInputProps extends Omit<ComponentProps<"input">, "type"> {
   className?: string;
 }
 
-function PasswordInput(
-  { className, ...props }: PasswordInputProps,
-  ref: ComponentProps<"input">["ref"]
-) {
+function PasswordInput({ className, ...props }: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const togglePasswordVisibility = () => {
@@ -23,7 +20,6 @@ function PasswordInput(
     <div className="relative">
       <Input
         type={showPassword ? "text" : "password"}
-        ref={ref}
         className={cn("pr-10", className)}
         {...props}
       />
