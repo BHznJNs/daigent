@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { open } from "@tauri-apps/plugin-dialog";
-import { useEffect, useState } from "react";
+import { Activity, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -220,7 +220,7 @@ export function WorkspaceEdit({
         <AgentList agents={usableAgents} onChange={handleAgentConfirm} />
 
         <div className="mt-4 flex justify-end gap-2">
-          {isEditMode && (
+          <Activity mode={isEditMode ? "visible" : "hidden"}>
             <ConfirmDeleteDialog
               description={`确定要删除工作区"${workspace?.name ?? ""}"吗？此操作无法撤销。`}
               onConfirm={handleDeleteConfirm}
@@ -230,7 +230,7 @@ export function WorkspaceEdit({
                 {deleteWorkspaceMutation.isPending ? "删除中..." : "删除"}
               </Button>
             </ConfirmDeleteDialog>
-          )}
+          </Activity>
           <Button
             type="button"
             variant="outline"

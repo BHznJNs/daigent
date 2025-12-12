@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon, FolderIcon, PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { Activity, useState } from "react";
 import { fetchWorkspaces } from "@/api/workspace";
 import { FailedToLoad } from "@/components/FailedToLoad";
 import { Button } from "@/components/ui/button";
@@ -185,13 +185,13 @@ export function WorkspacesView() {
       />
       <div className="flex-1">
         {content}
-        {showCreateForm && (
+        <Activity mode={showCreateForm ? "visible" : "hidden"}>
           <WorkspaceEdit
             workspace={DEFAULT_WORKSPACE}
             onConfirm={() => setShowCreateForm(false)}
             onCancel={() => setShowCreateForm(false)}
           />
-        )}
+        </Activity>
       </div>
     </div>
   );

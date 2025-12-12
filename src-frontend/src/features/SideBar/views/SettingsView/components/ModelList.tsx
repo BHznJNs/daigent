@@ -1,4 +1,5 @@
 import { Download, Edit2, Trash2 } from "lucide-react";
+import { Activity } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,21 +38,21 @@ type ModelItemProps = {
 function ModelItem({ model, index, onDelete, onEditConfirm }: ModelItemProps) {
   const capabilityBadges = (() => (
     <span className="space-x-1">
-      {model.capability.vision && (
+      <Activity mode={model.capability.vision ? "visible" : "hidden"}>
         <Badge key="vision" variant="secondary">
           视觉
         </Badge>
-      )}
-      {model.capability.reasoning && (
+      </Activity>
+      <Activity mode={model.capability.reasoning ? "visible" : "hidden"}>
         <Badge key="reasoning" variant="secondary">
           推理
         </Badge>
-      )}
-      {model.capability.tool_use && (
+      </Activity>
+      <Activity mode={model.capability.tool_use ? "visible" : "hidden"}>
         <Badge key="tool_use" variant="secondary">
           工具使用
         </Badge>
-      )}
+      </Activity>
     </span>
   ))();
 

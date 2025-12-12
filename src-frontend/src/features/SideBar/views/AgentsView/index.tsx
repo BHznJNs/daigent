@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDownIcon, PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { Activity, useState } from "react";
 import { fetchAgents } from "@/api/agent";
 import { FailedToLoad } from "@/components/FailedToLoad";
 import { Button } from "@/components/ui/button";
@@ -161,13 +161,13 @@ export function AgentsView() {
       />
       <div className="flex-1">
         {content}
-        {showCreateForm && (
+        <Activity mode={showCreateForm ? "visible" : "hidden"}>
           <AgentEdit
             agent={DEFAULT_AGENT}
             onSuccess={() => setShowCreateForm(false)}
             onCancel={() => setShowCreateForm(false)}
           />
-        )}
+        </Activity>
       </div>
     </div>
   );

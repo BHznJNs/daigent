@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { Activity, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createAgent, deleteAgent, updateAgent } from "@/api/agent";
@@ -186,7 +186,7 @@ export function AgentEdit({ agent, onSuccess, onCancel }: AgentEditProps) {
         />
 
         <div className="mt-4 flex justify-end gap-2">
-          {isEditMode && (
+          <Activity mode={isEditMode ? "visible" : "hidden"}>
             <ConfirmDeleteDialog
               description={`确定要删除 Agent "${agent.name}" 吗？此操作无法撤销。`}
               onConfirm={handleDeleteConfirm}
@@ -196,7 +196,7 @@ export function AgentEdit({ agent, onSuccess, onCancel }: AgentEditProps) {
                 {deleteAgentMutation.isPending ? "删除中..." : "删除"}
               </Button>
             </ConfirmDeleteDialog>
-          )}
+          </Activity>
           <Button
             type="button"
             variant="outline"

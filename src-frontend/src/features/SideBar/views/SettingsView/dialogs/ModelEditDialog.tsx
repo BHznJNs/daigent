@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Activity, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -99,9 +99,9 @@ export function ModelEditDialog({
                     aria-invalid={fieldState.invalid}
                     placeholder="请输入模型名称"
                   />
-                  {fieldState.invalid && (
+                  <Activity mode={fieldState.invalid ? "visible" : "hidden"}>
                     <FieldError errors={[fieldState.error]} />
-                  )}
+                  </Activity>
                 </Field>
               )}
             />
@@ -126,9 +126,9 @@ export function ModelEditDialog({
                     aria-invalid={fieldState.invalid}
                     placeholder="128000"
                   />
-                  {fieldState.invalid && (
+                  <Activity mode={fieldState.invalid ? "visible" : "hidden"}>
                     <FieldError errors={[fieldState.error]} />
-                  )}
+                  </Activity>
                 </Field>
               )}
             />

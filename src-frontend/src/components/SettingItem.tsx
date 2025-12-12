@@ -1,3 +1,4 @@
+import { Activity } from "react";
 import { cn } from "@/lib/utils";
 
 export type SettingItemProps = {
@@ -38,7 +39,7 @@ export function SettingItem({
         <div className={cn("whitespace-nowrap leading-none", titleClassName)}>
           {title}
         </div>
-        {description && (
+        <Activity mode={description ? "visible" : "hidden"}>
           <div
             className={cn(
               "text-muted-foreground text-xs",
@@ -47,7 +48,7 @@ export function SettingItem({
           >
             {description}
           </div>
-        )}
+        </Activity>
       </div>
       <div className={cn("flex items-center", contentClassName)}>
         {children}

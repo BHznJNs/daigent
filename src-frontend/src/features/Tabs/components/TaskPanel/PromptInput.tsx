@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Activity, useState } from "react";
 import {
   PromptInput as BasePromptInput,
   PromptInputBody,
@@ -43,17 +43,17 @@ export function PromptInput({ taskType, onSubmit }: PromptInputProps) {
       </PromptInputBody>
       <PromptInputFooter>
         <PromptInputTools>
-          {taskType === "agent" && (
+          <Activity mode={taskType === "agent" ? "visible" : "hidden"}>
             <AgentSelector
               value={selectedAgent}
               onValueChange={setSelectedAgent}
             />
-          )}
-          {taskType === "orchestration" && (
+          </Activity>
+          <Activity mode={taskType === "orchestration" ? "visible" : "hidden"}>
             <Button variant="outline" disabled>
-              Orchestrator
+              Agent
             </Button>
-          )}
+          </Activity>
         </PromptInputTools>
         <PromptInputSubmit disabled={!ableToSubmit} />
       </PromptInputFooter>
