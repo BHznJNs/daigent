@@ -1,5 +1,5 @@
 import threading
-from .task import AgentTask
+from .task import AgentTask, AgentTaskSentinel
 from ..services.task import TaskService
 
 class AgentTaskPool:

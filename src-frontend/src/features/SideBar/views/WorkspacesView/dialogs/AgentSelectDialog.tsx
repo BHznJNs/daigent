@@ -76,7 +76,7 @@ export function AgentSelectDialog({
     isFetchingNextPage,
     refetch,
   } = useInfiniteQuery<AgentPaginatedResponse>({
-    queryKey: ["agents"],
+    queryKey: ["agents", "infinite"],
     queryFn: ({ pageParam = 1 }) => fetchAgents(pageParam as number),
     getNextPageParam: (lastPage) => {
       if (lastPage.page < lastPage.total_pages) {
@@ -94,12 +94,11 @@ export function AgentSelectDialog({
     if (isOpen) {
       existingAgentIds.current.clear();
       selectedAgentIds.current.clear();
-      refetch();
     }
   }, [isOpen]);
 
   useEffect(() => {
-    if (allAgents && allAgents.length > 0) {
+    if (allAgents.length > 0) {
       existingAgentIds.current = new Set(existingAgentArr.map((a) => a.id));
       selectedAgentIds.current = structuredClone(existingAgentIds.current);
 
@@ -141,7 +140,7 @@ export function AgentSelectDialog({
     if (isError) {
       return (
         <FailedToLoad
-          refetch={() => refetch()}
+          refetch={refetch}
           description="无法获取 Agent 列表，请稍后重试。"
         />
       );
@@ -178,8 +177,8 @@ export function AgentSelectDialog({
               />
             );
           })}
+          {isFetchingNextPage && <AgentSelectSkeleton />}
         </InfiniteScroll>
-        {isFetchingNextPage && <AgentSelectSkeleton />}
       </div>
     );
   })();

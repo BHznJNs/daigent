@@ -8,7 +8,7 @@ from typing import Any, Generic, TypeVar
 
 TASK_RET = TypeVar("TASK_RET")
 
-@dataclass
+@dataclass(frozen=True)
 class TaskId(Generic[TASK_RET]):
     uid: uuid.UUID = field(default_factory=uuid.uuid4)
 

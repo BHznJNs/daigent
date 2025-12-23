@@ -1,11 +1,12 @@
-import type { TaskRead, TaskType } from "./task";
+import type { TaskType } from "./task";
 
-export type TaskTabMetadata =
+export type TaskTabMetadata = { taskType: TaskType } & (
+  | { isDraft: true }
   | {
-      isDraft: true;
-      type: TaskType;
+      isDraft: false;
+      taskId: number;
     }
-  | ({ isDraft: false } & TaskRead);
+);
 
 export type Tab = {
   id: string;

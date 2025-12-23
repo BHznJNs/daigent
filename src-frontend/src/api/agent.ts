@@ -18,7 +18,9 @@ export async function fetchAgents(
     per_page: perPage.toString(),
   });
 
-  return await fetchApi<AgentPaginatedResponse>(`${API_BASE}/agents?${params}`);
+  return await fetchApi<AgentPaginatedResponse>(
+    `${API_BASE}/agents/?${params}`
+  );
 }
 
 export async function createAgent(agentData: AgentCreate): Promise<AgentRead> {

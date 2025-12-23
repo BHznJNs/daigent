@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { BotIcon, PlusIcon, WorkflowIcon } from "lucide-react";
+import { fetchTasks } from "@/api/task";
 import { FailedToLoad } from "@/components/FailedToLoad";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,35 +18,52 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { tabIdFactory } from "@/lib/tab";
 import { useTabsStore } from "@/stores/tabs-store";
-import type { TaskRead, TaskType } from "@/types/task";
+import { useWorkspaceStore } from "@/stores/workspace-store";
+import type { TaskType } from "@/types/task";
 import { SideBarHeader } from "../../SideBar";
 import { TaskItem } from "./components/TaskItem";
 import { TaskListSkeleton } from "./components/TaskListSkeleton";
 
 export function TasksView() {
-  const { addTab } = useTabsStore();
+  const { addTab, tabs, setActiveTab } = useTabsStore();
+  const { currentWorkspace } = useWorkspaceStore();
 
-  // TODO: 实现 fetchTasks API
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: () => {
-      // 临时返回空数据，等待 API 实现
-      return {
-        items: [
-          {
-            id: 1,
-            type: "agent",
-            title: "任务 1",
-            workspace_id: 1,
-          },
-        ] as TaskRead[],
-      };
+    queryKey: ["tasks", currentWorkspace?.id],
+    queryFn: async () => {
+      if (!currentWorkspace) {
+        throw new Error("No workspace selected");
+      }
+      return await fetchTasks(currentWorkspace.id);
     },
+    enabled: !!currentWorkspace,
   });
 
   const handleOpenTask = (taskId: number) => {
-    // TODO: 实现任务点击逻辑
-    console.log("任务被点击：", taskId);
+    const task = data?.items.find((t) => t.id === taskId);
+    if (!task) {
+      return;
+    }
+
+    const existingTab = tabs.find(
+      (t) =>
+        t.type === "task" && !t.metadata.isDraft && t.metadata.taskId === taskId
+    );
+
+    if (existingTab) {
+      setActiveTab(existingTab.id);
+    } else {
+      addTab({
+        id: tabIdFactory(),
+        title: task.title,
+        type: "task",
+        metadata: {
+          isDraft: false,
+          taskId: task.id,
+          taskType: task.type,
+        },
+      });
+    }
   };
 
   const handleNewTask = (taskType: TaskType) => {
@@ -58,12 +76,22 @@ export function TasksView() {
       type: "task",
       metadata: {
         isDraft: true,
-        type: taskType,
+        taskType,
       },
     });
   };
 
   const content = (() => {
+    if (!currentWorkspace) {
+      return (
+        <Empty>
+          <EmptyContent>
+            <EmptyTitle>未选择工作区</EmptyTitle>
+            <EmptyDescription>请先选择一个工作区以查看任务。</EmptyDescription>
+          </EmptyContent>
+        </Empty>
+      );
+    }
     if (isLoading) {
       return <TaskListSkeleton />;
     }
@@ -86,7 +114,7 @@ export function TasksView() {
       );
     }
     return (
-      <ScrollArea className="flex-1">
+      <ScrollArea className="h-full">
         {data?.items.map((task) => (
           <TaskItem key={task.id} task={task} onClick={handleOpenTask} />
         ))}
@@ -103,7 +131,12 @@ export function TasksView() {
             button: (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-8">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    disabled={!currentWorkspace}
+                  >
                     <PlusIcon className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -125,7 +158,7 @@ export function TasksView() {
           },
         ]}
       />
-      <div className="flex-1">{content}</div>
+      <div className="h-full min-h-0 flex-1">{content}</div>
     </div>
   );
 }

@@ -1,12 +1,10 @@
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import type {
   AssistantMessageChunk,
-  TaskCreate,
-  TaskMessageCreate,
-  TaskPaginatedResponse,
-  TaskRead,
   ToolMessage,
-} from "@/types/task";
+  UserMessage,
+} from "@/types/message";
+import type { TaskCreate, TaskPaginatedResponse, TaskRead } from "@/types/task";
 import { API_BASE, fetchApi } from "./index";
 
 export async function fetchTasks(
@@ -37,15 +35,6 @@ export async function createTask(taskData: TaskCreate): Promise<TaskRead> {
   });
 }
 
-export async function pauseTask(taskId: number): Promise<void> {
-  await fetch(`${API_BASE}/tasks/pause/${taskId}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-}
-
 export async function deleteTask(taskId: number): Promise<void> {
   await fetch(`${API_BASE}/tasks/${taskId}`, {
     method: "DELETE",
@@ -55,17 +44,21 @@ export async function deleteTask(taskId: number): Promise<void> {
   });
 }
 
-type TaskSSECallbacks = {
-  onAssistantChunk?: (chunk: AssistantMessageChunk) => void;
+type TaskSseCallbacks = {
+  onMessageStart?: () => void;
+  onMessageEnd?: () => void;
+  onMessageChunk?: (chunk: AssistantMessageChunk) => void;
   onTool?: (tool: ToolMessage) => void;
   onError?: (error: Error) => void;
   onClose?: () => void;
 };
+type TaskSentinel = "MESSAGE_START" | "MESSAGE_END" | "DONE";
+type SseEvent = "assistant_chunk" | "tool" | "error" | TaskSentinel;
 
 export function resumeTask(
   taskId: number,
-  message: TaskMessageCreate | null,
-  callbacks: TaskSSECallbacks
+  message: ToolMessage | UserMessage | null,
+  callbacks: TaskSseCallbacks
 ): AbortController {
   const abortController = new AbortController();
 
@@ -97,13 +90,26 @@ export function resumeTask(
       try {
         const data = JSON.parse(event.data);
 
-        switch (event.event) {
+        switch (event.event as SseEvent) {
           case "assistant_chunk":
-            callbacks.onAssistantChunk?.(data as AssistantMessageChunk);
+            callbacks.onMessageChunk?.(data as AssistantMessageChunk);
             break;
           case "tool":
             callbacks.onTool?.(data as ToolMessage);
             break;
+          case "error":
+            callbacks.onError?.(new Error(data.message));
+            break;
+          case "MESSAGE_START":
+            callbacks.onMessageStart?.();
+            break;
+          case "MESSAGE_END":
+            callbacks.onMessageEnd?.();
+            break;
+          case "DONE":
+            callbacks.onClose?.();
+            abortController.abort();
+            return;
           default:
             console.warn("Unknown SSE event type:", event.event);
         }

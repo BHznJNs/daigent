@@ -64,9 +64,9 @@ function SortableTab({ tab }: { tab: Tab }) {
         onMouseDown={(e) => handleMouseDown(e, tab.id)}
         className={cn(
           "group flex min-w-24 shrink-0 cursor-pointer items-center justify-between gap-2 text-nowrap border-r border-b py-2 pr-2 pl-4 text-muted-foreground text-sm outline-0 transition-colors duration-200 ease-in-out",
-          "hover:bg-muted/40 hover:text-primary",
+          "hover:bg-card/60 hover:text-primary",
           {
-            "border-b-transparent bg-muted! text-primary!":
+            "border-b-transparent bg-card! text-primary!":
               tab.id === activeTabId,
           }
         )}
@@ -161,7 +161,7 @@ export function Tabs() {
             items={tabs.map((tab) => tab.id)}
             strategy={rectSortingStrategy}
           >
-            <ReactTabList className="shink-0 flex bg-card">
+            <ReactTabList className="shink-0 flex bg-muted/40">
               {tabs.map((tab) => (
                 <SortableTab key={tab.id} tab={tab} />
               ))}
@@ -177,13 +177,13 @@ export function Tabs() {
             }
             if (tabs.length === 0) {
               return (
-                <div className="flex h-full items-center justify-center bg-muted text-muted-foreground">
+                <div className="flex h-full items-center justify-center bg-card">
                   <p>No tabs open</p>
                 </div>
               );
             }
             return tabs.map((tab) => (
-              <ReactTabPanel key={tab.id} className="hidden h-full bg-muted">
+              <ReactTabPanel key={tab.id} className="hidden h-full bg-card">
                 {(() => {
                   switch (tab.type) {
                     case "task":

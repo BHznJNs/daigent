@@ -80,7 +80,7 @@ export function ActivityBar() {
   return (
     <div
       className={cn(
-        "flex flex-col justify-between bg-card",
+        "flex flex-col justify-between bg-muted",
         isOpen && "border-r"
       )}
     >

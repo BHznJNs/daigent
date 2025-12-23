@@ -3,7 +3,7 @@ import { Activity, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createAgent, deleteAgent, updateAgent } from "@/api/agent";
-import { getModel } from "@/api/llm-model";
+import { fetchModelById } from "@/api/llm-model";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeteteDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +32,7 @@ export function AgentEdit({ agent, onSuccess, onCancel }: AgentEditProps) {
   const modelId = (isEditMode ? agent.model?.id : agent.model_id) ?? null;
   const { data: model } = useQuery({
     queryKey: ["llm_models", modelId],
-    queryFn: () => (modelId ? getModel(modelId) : null),
+    queryFn: () => (modelId ? fetchModelById(modelId) : null),
   });
 
   const {

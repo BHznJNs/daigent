@@ -1,14 +1,24 @@
-from typing import cast
+import platform
+from .prompts.instruction import BASE_INSTRUCTION
 from ..db.models import agent as agent_models,\
                         provider as provider_models,\
                         workspace as workspace_models
 from ..services.agent import AgentService
 from ..services.workspace import WorkspaceService
-from ..services.provider import ProviderService
+from ..services.llm_model import LlmModelService
 
 class AgentContext:
     def __init__(self, workspace_id: int, agent_id: int):
         self._retrieve(workspace_id, agent_id)
+        self._system_instruction = BASE_INSTRUCTION.format(
+            os_platform=platform.system(),
+            user_language="zh-CN",
+            user_custom_instruction=self.agent.system_prompt
+        )
+
+    @property
+    def system_instruction(self) -> str:
+        return self._system_instruction
 
     def _retrieve(self, workspace_id: int, agent_id: int):
         with WorkspaceService() as workspace_service:
@@ -23,8 +33,13 @@ class AgentContext:
             raise ValueError(f"Agent {agent_id} not found")
         self._agent = agent
 
-        self._model = cast(provider_models.LlmModel, agent.model)
-        self._provider = cast(provider_models.Provider, self._model.provider)
+        with LlmModelService() as llm_model_service:
+            model = llm_model_service.get_model_by_id(agent.model_id)
+        if not model:
+            raise ValueError(f"Model {agent.model_id} not found")
+
+        self._model = model
+        self._provider = self._model.provider
 
     @property
     def workspace(self) -> workspace_models.Workspace:

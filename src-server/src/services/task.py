@@ -10,10 +10,7 @@ class TaskNotFoundError(HTTPException):
 class TaskService(ServiceBase):
     def create_task(self, data: dict) -> task_models.Task:
         messages_raw = data.pop("messages")
-        messages = [
-            task_models.TaskMessage(**item)
-            for item in messages_raw
-        ]
+        messages = task_models.messages_adapter.validate_python(messages_raw)
         new_task = task_models.Task(messages=messages, **data)
 
         try:
@@ -40,7 +37,11 @@ class TaskService(ServiceBase):
         stmt = base_query.options(
             selectinload(task_models.Task.agent),
             selectinload(task_models.Task.workspace),
-            load_only(task_models.Task.id, task_models.Task.type, task_models.Task.title, task_models.Task.agent_id, task_models.Task.workspace_id)
+            load_only(task_models.Task.id,
+                      task_models.Task.type,
+                      task_models.Task.title,
+                      task_models.Task.agent_id,
+                      task_models.Task.workspace_id)
         ).order_by(task_models.Task.id.desc()).limit(per_page).offset(offset)
 
         tasks = self._db_session.execute(stmt).scalars().all()
@@ -72,10 +73,8 @@ class TaskService(ServiceBase):
 
         if "messages" in data:
             messages_raw = data.pop("messages")
-            task.messages = [
-                task_models.TaskMessage(**item)
-                for item in messages_raw
-            ]
+            messages = task_models.messages_adapter.validate_python(messages_raw)
+            task.messages = messages
 
         for key, value in data.items():
             if hasattr(task, key):

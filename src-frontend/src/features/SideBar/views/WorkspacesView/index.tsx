@@ -118,10 +118,6 @@ export function WorkspacesView() {
     queryFn: () => fetchWorkspaces(1, 20),
   });
 
-  const handleSelectWorkspace = async (workspaceId: number) => {
-    await setCurrentWorkspace(workspaceId);
-  };
-
   const content = (() => {
     if (isLoading) {
       return <WorkspaceListSkeleton />;
@@ -152,7 +148,7 @@ export function WorkspacesView() {
             workspace={workspace}
             disabled={isCurrentWorkspaceSetting}
             isSelected={workspace.id === currentWorkspace?.id}
-            onSelect={handleSelectWorkspace}
+            onSelect={setCurrentWorkspace}
           />
         ))}
       </ScrollArea>

@@ -6,7 +6,7 @@ from .routes import workspaces_bp, tasks_bp, providers_bp, llm_api_bp, llm_model
 class App(Flask):
     def __init__(self):
         super().__init__(__name__)
-        CORS(self)
+        CORS(self, resources={r"/*": {"origins": "*"}})
         self._init_routes()
 
     def _init_routes(self):

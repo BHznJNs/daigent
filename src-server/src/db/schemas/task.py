@@ -1,10 +1,5 @@
 from . import DTOBase
-from ..models.task import MessageRole, TaskType
-
-class TaskMessage(DTOBase):
-    role: MessageRole
-    content: str
-    metadata: dict[str, str]
+from ..models.task import TaskMessage, TaskType
 
 class TaskBase(DTOBase):
     title: str

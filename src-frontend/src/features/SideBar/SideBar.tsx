@@ -44,7 +44,7 @@ export function SideBar() {
   }
 
   return (
-    <div className="h-full bg-card">
+    <div className="h-full bg-muted/40">
       {[
         TasksView,
         WorkspacesView,

@@ -1,11 +1,12 @@
 from collections.abc import Generator
 from dataclasses import asdict
 from typing import cast
+from loguru import logger
 from flask import Blueprint, Response, jsonify, request, stream_with_context
 from liteai_sdk import AssistantMessageChunk, ToolMessage
 from pydantic import ValidationError
 from .utils import FlaskResponse
-from ..agent import AgentTask, AgentTaskPool
+from ..agent import AgentTask, AgentTaskPool, AgentTaskSentinel
 from ..services.task import TaskService
 from ..db.schemas import task as task_schemas
 from ..db.models import task as task_models
@@ -13,6 +14,7 @@ from ..utils.sse import format_sse
 
 tasks_bp = Blueprint("tasks", __name__)
 task_pool = AgentTaskPool()
+_logger = logger.bind(name="TaskRoute")
 
 @tasks_bp.route("/", methods=["GET"])
 def get_tasks() -> FlaskResponse:
@@ -23,8 +25,22 @@ def get_tasks() -> FlaskResponse:
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 15, type=int)
     with TaskService() as service:
-        tasks = service.get_tasks(workspace_id, page, per_page)
-        return jsonify(tasks)
+        result = service.get_tasks(workspace_id, page, per_page)
+
+        serialized_items = [
+            task_schemas.TaskRead
+                        .model_validate(task)
+                        .model_dump(mode="json")
+            for task in result["items"]
+        ]
+
+        return jsonify({
+            "items": serialized_items,
+            "total": result["total"],
+            "page": result["page"],
+            "per_page": result["per_page"],
+            "total_pages": result["total_pages"]
+        })
 
 @tasks_bp.route("/<int:task_id>", methods=["GET"])
 def get_task(task_id: int) -> FlaskResponse:
@@ -51,36 +67,46 @@ def new_task() -> FlaskResponse:
 @tasks_bp.route("/resume/<int:task_id>", methods=["POST"])
 def resume_task(task_id: int) -> FlaskResponse:
     def agent_stream(task: AgentTask) -> Generator[str]:
-        for chunk in task.run():
-            event = None
-            match chunk:
-                case AssistantMessageChunk():
-                    event = "assistant_chunk"
-                case ToolMessage():
-                    event = "tool"
-            yield format_sse(event=event, data=asdict(chunk))
+        try:
+            for chunk in task.run():
+                event = None
+                match chunk:
+                    case AssistantMessageChunk():
+                        event = "assistant_chunk"
+                        if chunk.content:
+                            yield format_sse(event=event, data={
+                                "type": "content",
+                                "content": chunk.content,
+                            })
+                        # TODO: support model outputting images and audio
+                    case ToolMessage():
+                        event = "tool"
+                        yield format_sse(event=event, data=asdict(chunk))
+                    case AgentTaskSentinel():
+                        yield format_sse(event=chunk, data=None)
+                    case Exception():
+                        _logger.exception("Task failed: {}", chunk)
+                        yield format_sse(event="error", data={"message": str(chunk)})
+                        break
+            yield format_sse(event=AgentTaskSentinel.Done, data=None)
+        except GeneratorExit:
+            task_pool.stop(task_id)
 
-    assert request.json is not None
-    message = cast(dict, request.json.get("message"))
+    if request.json is None:
+        return jsonify({"error": "Request body is required"}), 400
+
+    message = cast(dict | None, request.json.get("message"))
     task = task_pool.add(task_id)
 
     if message:
         try:
-            message_obj = task_schemas.TaskMessage.model_validate(message)
+            message_obj = task_models.message_adapter.validate_python(message)
         except ValidationError as e:
             return jsonify({"error": e.errors()}), 400
-        task.append_message(task_models.TaskMessage(**message_obj.model_dump()))
+        task.append_message(message_obj)
 
     return Response(stream_with_context(agent_stream(task)),
                     mimetype="text/event-stream")
-
-@tasks_bp.route("/pause/<int:task_id>", methods=["POST"])
-def pause_task(task_id: int) -> FlaskResponse:
-    if not task_pool.has(task_id):
-        return jsonify({"error": "Task not found"}), 404
-
-    task_pool.stop(task_id)
-    return Response(status=204)
 
 @tasks_bp.route("/<int:task_id>", methods=["DELETE"])
 def delete_task(task_id: int) -> FlaskResponse:

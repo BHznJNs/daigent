@@ -11,7 +11,7 @@ type WorkspaceState = {
 
 type WorkspaceActions = {
   setCurrentWorkspace: (workspaceId: number | null) => Promise<void>;
-  syncCurrentWorkspace: () => Promise<void>;
+  syncCurrentWorkspace: (workspaceId?: number) => Promise<void>;
 };
 
 type PersistedWorkspaceState = {
@@ -30,10 +30,10 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
           set({ currentWorkspace: null });
           return;
         }
-        await get().syncCurrentWorkspace();
+        await get().syncCurrentWorkspace(workspaceId);
       },
-      async syncCurrentWorkspace() {
-        const workspaceId = get().currentWorkspace?.id;
+      async syncCurrentWorkspace(workspaceId_) {
+        const workspaceId = workspaceId_ ?? get().currentWorkspace?.id;
         if (!workspaceId) {
           return;
         }
