@@ -86,18 +86,19 @@ ORM：SQLAlchemy + Alembic
 
 注：下面提到的依赖默认已经存在，不需要再去读文件验证是否存在。
 
-写组件时优先查找 shadcn 中是否有现成组件，有的话直接导入使用。没有的话再自行封装组件。
-编写样式时要合并 Tailwind CSS 类时使用 `cn()` 工具函数，已位于 `src/lib/utils.ts` 中。
-要使用图标时从 `lucide-react` 库中，统一用 `import { IconName } from "lucide-react"` 进行导入。
-使用 `zustand` 库进行状态管理，全局 store 放在 `frontend/src/stores/xxxStore.ts` 中。
-在进行 API 请求时，需要在 `frontend/src/api` 目录下创建新的 API 文件，API 方法统一使用 `function` 关键字定义。
-在调用 API 方法时，对于从后端拉取状态的方法，使用 `@tanstack/react-query` 的 `useQuery` 来管理请求状态；对于需要修改后端状态的方法，使用 `@tanstack/react-query` 的 `useMutation` 来管理请求状态。
-在需要创建表单时，使用 `react-hook-form` 库来辅助创建，并使用 shadcn-ui 提供的 Field 组件来辅助构建表单组件。
+- 写组件时优先查找 shadcn 中是否有现成组件，有的话直接导入使用。没有的话再自行封装组件。
+- 编写样式时要合并 Tailwind CSS 类时使用 `cn()` 工具函数，已位于 `src/lib/utils.ts` 中。
+- 要使用图标时从 `lucide-react` 库中，统一用 `import { IconName } from "lucide-react"` 进行导入。
+- 使用 `zustand` 库进行状态管理，全局 store 放在 `frontend/src/stores/xxxStore.ts` 中。
+- 在进行 API 请求时，需要在 `frontend/src/api` 目录下创建新的 API 文件，API 方法统一使用 `function` 关键字定义。
+- 在调用 API 方法时，对于从后端拉取状态的方法，使用 `@tanstack/react-query` 的 `useQuery` 来管理请求状态；对于需要修改后端状态的方法，使用 `@tanstack/react-query` 的 `useMutation` 来管理请求状态。
+- 在需要创建表单时，使用 `react-hook-form` 库来辅助创建，并使用 shadcn-ui 提供的 Field 组件来辅助构建表单组件。
+- 在编写需要请求后端获取数据来渲染的组件时，需要将具体 fetch 后端 API 并渲染数据的部分封装成子组件，在子组件中使用 `@tanstack/react-query` 的 suspense API 来请求后端，并在父组件中使用 `<Suspense>`、`<ErrorBoundary>` 和 `@tanstack/react-query` 提供的 `QueryErrorResetBoundary` 组件来包裹子组件并处理加载、错误和重试等状态。
+- **严禁修改 `components` 目录下的文件**
 
-如果遇到 CSS 类顺序错误请直接忽略。用户会在开发完成后一并解决。
-如果遇到 `components/ui` 中的组件报错，请忽略。
-
-**严禁修改 `components` 目录下的文件**
+需要忽略的情况：
+- 如果遇到 CSS 类顺序错误请直接忽略。用户会在开发完成后一并解决。
+- 如果遇到 `components/ui` 中的组件报错，请忽略。
 
 #### 前端 Biome 代码规范
 

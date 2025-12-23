@@ -1,12 +1,6 @@
-import { FileTextIcon } from "lucide-react";
-import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemMedia,
-  ItemTitle,
-} from "@/components/ui/item";
+import { Item, ItemContent, ItemMedia, ItemTitle } from "@/components/ui/item";
 import type { TaskRead } from "@/types/task";
+import { TaskIcon } from "./TaskIcon";
 
 type TaskItemProps = {
   task: TaskRead;
@@ -26,11 +20,10 @@ export function TaskItem({ task, onClick }: TaskItemProps) {
       onClick={handleClick}
     >
       <ItemMedia variant="icon">
-        <FileTextIcon className="size-4" />
+        <TaskIcon taskType={task.type} className="size-4" />
       </ItemMedia>
       <ItemContent>
         <ItemTitle>{task.title}</ItemTitle>
-        <ItemDescription>{task.type}</ItemDescription>
       </ItemContent>
     </Item>
   );
