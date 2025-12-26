@@ -1,11 +1,16 @@
 import { fetchEventSource } from "@microsoft/fetch-event-source";
-import type {
-  AssistantMessageChunk,
-  ToolMessage,
-  UserMessage,
-} from "@/types/message";
-import type { TaskCreate, TaskPaginatedResponse, TaskRead } from "@/types/task";
+import type { ToolCallChunk, ToolMessage, UserMessage } from "@/types/message";
+import type { TaskCreate, TaskRead } from "@/types/task";
 import { API_BASE, fetchApi } from "./index";
+
+// Paginated response type
+export type TaskPaginatedResponse = {
+  items: TaskRead[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+};
 
 export async function fetchTasks(
   workspaceId: number,
@@ -47,13 +52,21 @@ export async function deleteTask(taskId: number): Promise<void> {
 type TaskSseCallbacks = {
   onMessageStart?: () => void;
   onMessageEnd?: () => void;
-  onMessageChunk?: (chunk: AssistantMessageChunk) => void;
-  onTool?: (tool: ToolMessage) => void;
+  onMessageChunk?: (chunk: AssistantMessageChunkData) => void;
   onError?: (error: Error) => void;
   onClose?: () => void;
 };
 type TaskSentinel = "MESSAGE_START" | "MESSAGE_END" | "DONE";
-type SseEvent = "assistant_chunk" | "tool" | "error" | TaskSentinel;
+type SseEvent = "assistant_chunk" | TaskSentinel | "error";
+type AssistantMessageChunkData =
+  | {
+      type: "text";
+      content: string;
+    }
+  | {
+      type: "tool_call";
+      data: ToolCallChunk;
+    };
 
 export function resumeTask(
   taskId: number,
@@ -92,10 +105,7 @@ export function resumeTask(
 
         switch (event.event as SseEvent) {
           case "assistant_chunk":
-            callbacks.onMessageChunk?.(data as AssistantMessageChunk);
-            break;
-          case "tool":
-            callbacks.onTool?.(data as ToolMessage);
+            callbacks.onMessageChunk?.(data as AssistantMessageChunkData);
             break;
           case "error":
             callbacks.onError?.(new Error(data.message));

@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { fetchProviderModels } from "@/api/llm";
+import { SelectionItem } from "@/components/custom/item/SelectionItem";
 import { FailedToLoad } from "@/components/FailedToLoad";
-import { SelectionItem } from "@/components/SelectionItem";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

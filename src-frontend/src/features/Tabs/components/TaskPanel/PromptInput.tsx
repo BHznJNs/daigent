@@ -1,4 +1,4 @@
-import { Activity, useState } from "react";
+import { Activity, useEffect, useState } from "react";
 import {
   PromptInput as BasePromptInput,
   PromptInputBody,
@@ -10,30 +10,55 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Button } from "@/components/ui/button";
 import { ORCHESTRATOR_ID } from "@/constants/agent";
+import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { AgentRead } from "@/types/agent";
-import type { TaskType } from "@/types/task";
+import type { TaskRead, TaskType } from "@/types/task";
 import { AgentSelector } from "./AgentSelector";
 
 type PromptInputProps = {
   taskType: TaskType;
+  taskData: TaskRead | null;
+  isTaskRunning: boolean;
   onSubmit: (message: PromptInputMessage, agentId: number) => void;
+  onCancel?: () => void;
 };
 
 export type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 
-export function PromptInput({ taskType, onSubmit }: PromptInputProps) {
+export function PromptInput({
+  taskType,
+  taskData,
+  isTaskRunning,
+  onSubmit,
+  onCancel,
+}: PromptInputProps) {
+  const { currentWorkspace } = useWorkspaceStore();
   const [prompt, setPrompt] = useState("");
   const [selectedAgent, setSelectedAgent] = useState<AgentRead | null>(null);
   const ableToSubmit =
     prompt.trim() !== "" &&
     (taskType === "orchestration" || selectedAgent !== null);
 
+  useEffect(() => {
+    if (taskData) {
+      const initialAgent = currentWorkspace?.usable_agents.find(
+        (a) => a.id === taskData?.agent_id
+      );
+      setSelectedAgent(initialAgent ?? null);
+    }
+  }, [taskData, currentWorkspace]);
+
   return (
     <BasePromptInput
       className="rounded-md bg-background"
-      onSubmit={(message) =>
-        onSubmit(message, selectedAgent?.id ?? ORCHESTRATOR_ID)
-      }
+      onSubmit={(message) => {
+        if (isTaskRunning) {
+          onCancel?.();
+        } else {
+          setPrompt("");
+          onSubmit(message, selectedAgent?.id ?? ORCHESTRATOR_ID);
+        }
+      }}
     >
       <PromptInputBody>
         <PromptInputTextarea
@@ -55,7 +80,10 @@ export function PromptInput({ taskType, onSubmit }: PromptInputProps) {
             </Button>
           </Activity>
         </PromptInputTools>
-        <PromptInputSubmit disabled={!ableToSubmit} />
+        <PromptInputSubmit
+          status={isTaskRunning ? "streaming" : "ready"}
+          disabled={!(isTaskRunning || ableToSubmit)}
+        />
       </PromptInputFooter>
     </BasePromptInput>
   );

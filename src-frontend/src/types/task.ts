@@ -1,4 +1,4 @@
-import type { AssistantMessageChunk, Message, ToolMessage } from "./message";
+import type { Message } from "./message";
 
 export type TaskType = "agent" | "orchestration";
 
@@ -20,17 +20,3 @@ export type TaskCreate = TaskBase & {
 };
 
 export type TaskUpdate = Partial<TaskCreate>;
-
-// Paginated response type
-export type TaskPaginatedResponse = {
-  items: TaskRead[];
-  total: number;
-  page: number;
-  per_page: number;
-  total_pages: number;
-};
-
-// SSE event types
-export type TaskSSEEvent =
-  | { event: "assistant_chunk"; data: AssistantMessageChunk }
-  | { event: "tool"; data: ToolMessage };

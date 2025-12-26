@@ -1,4 +1,4 @@
-import { SettingItem } from "@/components/SettingItem";
+import { SettingItem } from "@/components/custom/item/SettingItem";
 import {
   Select,
   SelectContent,

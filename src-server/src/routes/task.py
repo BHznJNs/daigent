@@ -3,7 +3,7 @@ from dataclasses import asdict
 from typing import cast
 from loguru import logger
 from flask import Blueprint, Response, jsonify, request, stream_with_context
-from liteai_sdk import AssistantMessageChunk, ToolMessage
+from liteai_sdk import TextChunk, ToolCallChunk
 from pydantic import ValidationError
 from .utils import FlaskResponse
 from ..agent import AgentTask, AgentTaskPool, AgentTaskSentinel
@@ -71,26 +71,29 @@ def resume_task(task_id: int) -> FlaskResponse:
             for chunk in task.run():
                 event = None
                 match chunk:
-                    case AssistantMessageChunk():
+                    case TextChunk():
                         event = "assistant_chunk"
-                        if chunk.content:
-                            yield format_sse(event=event, data={
-                                "type": "content",
-                                "content": chunk.content,
-                            })
-                        # TODO: support model outputting images and audio
-                    case ToolMessage():
-                        event = "tool"
-                        yield format_sse(event=event, data=asdict(chunk))
+                        yield format_sse(event=event, data={
+                            "type": "text",
+                            "content": chunk.content,
+                        })
+                    case ToolCallChunk():
+                        event = "assistant_chunk"
+                        yield format_sse(event=event, data={
+                            "type": "tool_call",
+                            "data": asdict(chunk),
+                        })
                     case AgentTaskSentinel():
-                        yield format_sse(event=chunk, data=None)
+                        yield format_sse(event=chunk.value, data=None)
                     case Exception():
                         _logger.exception("Task failed: {}", chunk)
                         yield format_sse(event="error", data={"message": str(chunk)})
                         break
-            yield format_sse(event=AgentTaskSentinel.Done, data=None)
+            task_pool.remove(task_id)
         except GeneratorExit:
+            # when the client disconnects
             task_pool.stop(task_id)
+            return
 
     if request.json is None:
         return jsonify({"error": "Request body is required"}), 400

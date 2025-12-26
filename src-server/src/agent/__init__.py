@@ -21,11 +21,18 @@ class AgentTaskPool:
             self._pool[task_id] = AgentTask(task)
             return self._pool[task_id]
 
+    def remove(self, task_id: int):
+        with self._lock:
+            if (task := self._pool.pop(task_id, None)) is None:
+                return
+            task.persist()
+
     def stop(self, task_id: int):
         with self._lock:
-            if task_id not in self._pool: return
-            task = self._pool.pop(task_id)
+            if (task := self._pool.pop(task_id, None)) is None:
+                return
             task.stop()
+            task.persist()
 
     def get(self, task_id: int) -> AgentTask | None:
         with self._lock:

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { Checkbox } from "./ui/checkbox";
-import { Item, ItemActions, ItemContent, ItemTitle } from "./ui/item";
+import { Checkbox } from "../../ui/checkbox";
+import { Item, ItemActions, ItemContent, ItemTitle } from "../../ui/item";
 
 type SelectionValue = string | number;
 type SelectionItemProps<V extends SelectionValue> = {

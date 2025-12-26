@@ -5,24 +5,27 @@ import {
   ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-import {
-  Message,
-  MessageContent,
-  MessageResponse,
-} from "@/components/ai-elements/message";
 import type { Message as ConversationMessage } from "@/types/message";
+import { TextMessage } from "./TextMessage";
+import { ToolMessage } from "./ToolMessage";
 
 type TaskConversationProps = {
   messages: ConversationMessage[] | null;
   isLoading: boolean;
+  onCustomToolAction?: (
+    toolMessageId: string,
+    event: string,
+    data: unknown
+  ) => void;
 };
 
 export function TaskConversation({
   messages,
   isLoading,
+  onCustomToolAction,
 }: TaskConversationProps) {
   return (
-    <Conversation>
+    <Conversation id="conversation" className="conversation-container">
       <ConversationContent>
         <Activity mode={isLoading ? "visible" : "hidden"}>
           <ConversationEmptyState />
@@ -33,21 +36,20 @@ export function TaskConversation({
               return null;
             }
             if (message.role === "tool") {
-              // TODO: render tool messages
-              return null;
+              return (
+                <ToolMessage
+                  key={index}
+                  message={message}
+                  onCustomToolAction={onCustomToolAction}
+                />
+              );
             }
             return (
-              <Message key={index} from={message.role}>
-                <MessageContent>
-                  {message.role === "assistant" ? (
-                    <MessageResponse>
-                      {message.content as string}
-                    </MessageResponse>
-                  ) : (
-                    (message.content as string)
-                  )}
-                </MessageContent>
-              </Message>
+              <TextMessage
+                key={index}
+                text={message.content as string}
+                from={message.role}
+              />
             );
           })}
         </Activity>

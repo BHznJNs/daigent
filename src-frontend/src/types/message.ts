@@ -62,6 +62,7 @@ export type ToolMessage = {
   name: string;
   arguments: Record<string, unknown>;
   result: unknown;
+  error?: string;
 };
 
 export type SystemMessage = {
@@ -74,20 +75,6 @@ export type Message =
   | AssistantMessage
   | ToolMessage
   | SystemMessage;
-
-export type AssistantMessageChunk =
-  | {
-      type: "content";
-      content: string;
-    }
-  | {
-      type: "audio";
-      audio: ChatCompletionAudioResponse;
-    }
-  | {
-      type: "image";
-      image: ChatCompletionImageURL;
-    };
 
 export function isUserMessage(message: Message): message is UserMessage {
   return message.role === "user";
@@ -106,3 +93,16 @@ export function isToolMessage(message: Message): message is ToolMessage {
 export function isSystemMessage(message: Message): message is SystemMessage {
   return message.role === "system";
 }
+
+// --- --- --- --- --- ---
+
+export type TextChunk = {
+  content: string;
+};
+
+export type ToolCallChunk = {
+  id?: string;
+  name?: string;
+  arguments: string;
+  index: number;
+};

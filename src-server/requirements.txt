@@ -2,7 +2,7 @@ alembic==1.17.1
 flask==3.1.2
 flask-cors==6.0.1
 loguru==0.7.3
-liteai-sdk==0.3.1
+liteai-sdk==0.3.10
 platformdirs==4.5.0
 pyinstaller==6.16.0
 pydantic==2.12.4

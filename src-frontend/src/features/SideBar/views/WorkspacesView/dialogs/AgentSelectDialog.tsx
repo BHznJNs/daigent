@@ -2,8 +2,8 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import type { AgentPaginatedResponse } from "@/api/agent";
 import { fetchAgents } from "@/api/agent";
+import { SelectionItem } from "@/components/custom/item/SelectionItem";
 import { FailedToLoad } from "@/components/FailedToLoad";
-import { SelectionItem } from "@/components/SelectionItem";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

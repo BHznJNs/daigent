@@ -1,0 +1,14 @@
+.conversation-container > div::-webkit-scrollbar {
+  width: 0.5rem;
+  height: 100%;
+}
+
+.conversation-container > div::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.conversation-container > div::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 9999px;
+  background-clip: content-box;
+}

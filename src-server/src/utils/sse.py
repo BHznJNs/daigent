@@ -7,19 +7,15 @@ def format_sse(data: JsonSerializable,
                retry: int | None = None) -> str:
     buffer = []
 
-    # 1. 处理 id
     if event_id is not None:
         buffer.append(f"id: {event_id}")
 
-    # 2. 处理 event
     if event is not None:
         buffer.append(f"event: {event}")
 
-    # 3. 处理 retry
     if retry is not None:
         buffer.append(f"retry: {retry}")
 
-    # 4. 处理 data
     # 如果数据不是字符串，尝试将其序列化为 JSON
     if not isinstance(data, str):
         # ensure_ascii=False 可以让中文不显示为 \uXXXX，减小体积且可读性更好

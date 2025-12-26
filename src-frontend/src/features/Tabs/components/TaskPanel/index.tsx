@@ -1,14 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
+import { Activity, useEffect, useState } from "react";
 import { useImmer } from "use-immer";
-import { createTask, fetchTaskById, resumeTask } from "@/api/task";
+import { createTask, fetchTaskById } from "@/api/task";
 import { useTabsStore } from "@/stores/tabs-store";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { UserMessage } from "@/types/message";
 import type { Tab } from "@/types/tab";
 import type { TaskRead } from "@/types/task";
+import { ContinueTask } from "./ContinueTask";
 import { PromptInput, type PromptInputMessage } from "./PromptInput";
 import { TaskConversation } from "./TaskConversation";
+import { type TaskRunner, useTaskRunner } from "./use-task-runner";
 
 type TaskPanelProps = {
   tabData: Tab;
@@ -18,7 +20,8 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
   const { currentWorkspace } = useWorkspaceStore();
   const { updateTab } = useTabsStore();
   const [taskData, setTaskData] = useImmer<TaskRead | null>(null);
-  const sseAbortController = useRef<AbortController | null>(null);
+  const [showContinueTask, setShowContinueTask] = useState(false);
+  const taskRunner = useTaskRunner(setTaskData);
 
   const queryClient = useQueryClient();
   const { data: taskQueryData, isLoading: taskLoading } = useQuery({
@@ -55,71 +58,15 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
   });
 
   useEffect(() => {
-    if (taskQueryData) {
-      setTaskData(taskQueryData);
+    if (!taskQueryData) {
+      return;
     }
-  }, [taskQueryData, setTaskData]);
-
-  const startSseConnection = useCallback(
-    (taskId: number, message: UserMessage | null) => {
-      sseAbortController.current?.abort();
-
-      const abortController = resumeTask(taskId, message, {
-        onMessageStart: () => {
-          setTaskData((draft) => {
-            if (!draft) {
-              return;
-            }
-            draft.messages.push({
-              role: "assistant",
-              content: "",
-            });
-          });
-        },
-        onMessageChunk: (chunk) => {
-          switch (chunk.type) {
-            case "content":
-              setTaskData((draft) => {
-                if (!draft) {
-                  return;
-                }
-                const lastMessage = draft.messages.at(-1);
-                if (lastMessage?.role === "assistant") {
-                  lastMessage.content += chunk.content;
-                  return;
-                }
-                draft.messages.push({
-                  role: "assistant",
-                  content: chunk.content,
-                });
-              });
-              break;
-            default:
-              break;
-          }
-        },
-        onTool: (tool) => {
-          console.log("tool:", tool);
-        },
-        onError: (error) => {
-          console.error("sse error:", error);
-        },
-        onClose: () => {
-          console.log("sse closed");
-        },
-      });
-
-      sseAbortController.current = abortController;
-    },
-    [setTaskData]
-  );
-
-  useEffect(
-    () => () => {
-      sseAbortController.current?.abort();
-    },
-    []
-  );
+    setTaskData(taskQueryData);
+    const lastMessage = taskQueryData.messages.at(-1);
+    if (lastMessage?.role === "user") {
+      setShowContinueTask(true);
+    }
+  }, [taskQueryData]);
 
   const handleSubmit = async (message: PromptInputMessage, agentId: number) => {
     if (!currentWorkspace) {
@@ -140,16 +87,34 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
         messages: [userMessage],
       });
 
-      startSseConnection(newTask.id, null);
+      taskRunner.run(newTask.id, null);
     } else {
       setTaskData((draft) => {
         if (draft) {
           draft.messages.push(userMessage);
         }
       });
-
-      startSseConnection(tabData.metadata.taskId, userMessage);
+      setShowContinueTask(false);
+      taskRunner.run(tabData.metadata.taskId, userMessage);
     }
+  };
+
+  const handleContinueTask = () => {
+    if (tabData.metadata.isDraft) {
+      return;
+    }
+    setShowContinueTask(false);
+    taskRunner.run(tabData.metadata.taskId, null);
+  };
+
+  const handleCustomToolAction = (
+    ...args: Parameters<TaskRunner["handleCustomToolAction"]>
+  ) => {
+    if (tabData.metadata.isDraft) {
+      return;
+    }
+    const changedToolMessage = taskRunner.handleCustomToolAction(...args);
+    taskRunner.run(tabData.metadata.taskId, changedToolMessage);
   };
 
   return (
@@ -157,10 +122,17 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
       <TaskConversation
         messages={taskData?.messages ?? null}
         isLoading={taskLoading}
+        onCustomToolAction={handleCustomToolAction}
       />
+      <Activity mode={showContinueTask ? "visible" : "hidden"}>
+        <ContinueTask onContinue={handleContinueTask} />
+      </Activity>
       <PromptInput
         taskType={tabData.metadata.taskType}
+        taskData={taskData}
+        isTaskRunning={taskRunner.isRunning}
         onSubmit={handleSubmit}
+        onCancel={taskRunner.cancel}
       />
     </div>
   );
