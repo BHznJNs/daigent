@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from .utils import FlaskResponse
+from .types import FlaskResponse
 from ..services.llm_model import LlmModelService
 from ..db.schemas import provider as provider_schemas
 

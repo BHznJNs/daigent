@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import type { AgentPaginatedResponse } from "@/api/agent";
 import { fetchAgents } from "@/api/agent";
+import type { PaginatedResponse } from "@/api/index";
 import { SelectionItem } from "@/components/custom/item/SelectionItem";
 import { FailedToLoad } from "@/components/FailedToLoad";
 import { Button } from "@/components/ui/button";
@@ -75,7 +75,7 @@ export function AgentSelectDialog({
     fetchNextPage,
     isFetchingNextPage,
     refetch,
-  } = useInfiniteQuery<AgentPaginatedResponse>({
+  } = useInfiniteQuery<PaginatedResponse<AgentRead>>({
     queryKey: ["agents", "infinite"],
     queryFn: ({ pageParam = 1 }) => fetchAgents(pageParam as number),
     getNextPageParam: (lastPage) => {

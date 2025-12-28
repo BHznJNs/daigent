@@ -1,24 +1,16 @@
 import type { AgentCreate, AgentRead, AgentUpdate } from "@/types/agent";
-import { API_BASE, fetchApi } from "./index";
-
-export type AgentPaginatedResponse = {
-  items: AgentRead[];
-  total: number;
-  page: number;
-  per_page: number;
-  total_pages: number;
-};
+import { API_BASE, fetchApi, type PaginatedResponse } from "./index";
 
 export async function fetchAgents(
   page = 1,
   perPage = 15
-): Promise<AgentPaginatedResponse> {
+): Promise<PaginatedResponse<AgentRead>> {
   const params = new URLSearchParams({
     page: page.toString(),
     per_page: perPage.toString(),
   });
 
-  return await fetchApi<AgentPaginatedResponse>(
+  return await fetchApi<PaginatedResponse<AgentRead>>(
     `${API_BASE}/agents/?${params}`
   );
 }

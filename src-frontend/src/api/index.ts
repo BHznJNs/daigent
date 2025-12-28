@@ -30,3 +30,11 @@ export async function fetchApi<T>(
   }
   throw new FetchError(errorMessage, res.status);
 }
+
+export type PaginatedResponse<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+};

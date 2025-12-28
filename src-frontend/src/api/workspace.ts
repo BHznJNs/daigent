@@ -3,26 +3,18 @@ import type {
   WorkspaceRead,
   WorkspaceUpdate,
 } from "@/types/workspace";
-import { API_BASE, fetchApi } from "./index";
-
-type WorkspacePaginatedResponse = {
-  items: WorkspaceRead[];
-  total: number;
-  page: number;
-  per_page: number;
-  total_pages: number;
-};
+import { API_BASE, fetchApi, type PaginatedResponse } from "./index";
 
 export async function fetchWorkspaces(
   page = 1,
   perPage = 10
-): Promise<WorkspacePaginatedResponse> {
+): Promise<PaginatedResponse<WorkspaceRead>> {
   const params = new URLSearchParams({
     page: page.toString(),
     per_page: perPage.toString(),
   });
 
-  return await fetchApi<WorkspacePaginatedResponse>(
+  return await fetchApi<PaginatedResponse<WorkspaceRead>>(
     `${API_BASE}/workspaces?${params}`
   );
 }

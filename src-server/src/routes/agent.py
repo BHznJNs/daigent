@@ -1,7 +1,7 @@
-from flask import Blueprint, Response, jsonify, request
-from pydantic import BaseModel, ValidationError
+from flask import Blueprint, Response, jsonify
+from pydantic import BaseModel
 from flask_pydantic import validate
-from .utils import FlaskResponse
+from .types import FlaskResponse, PaginatedResponse
 from ..services.agent import AgentService
 from ..db.schemas import agent as agent_schemas
 
@@ -23,37 +23,28 @@ def get_agents(query: AgentsQueryModel) -> FlaskResponse:
                          .model_dump(mode="json")
             for agent in result["items"]
         ]
-
-        return jsonify({
-            "items": serialized_items,
-            "total": result["total"],
-            "page": result["page"],
-            "per_page": result["per_page"],
-            "total_pages": result["total_pages"]
-        })
+        return jsonify(PaginatedResponse[dict](
+            items=serialized_items,
+            total=result["total"],
+            page=result["page"],
+            per_page=result["per_page"],
+            total_pages=result["total_pages"]
+        ))
 
 @agents_bp.route("/", methods=["POST"])
-def create_agent() -> FlaskResponse:
+@validate()
+def create_agent(body: agent_schemas.AgentCreate) -> FlaskResponse:
     with AgentService() as service:
-        try:
-            data = agent_schemas.AgentCreate.model_validate(request.json)
-        except ValidationError as e:
-            return jsonify({"error": e.errors()}), 400
-
-        new_agent = service.create_agent(data.model_dump())
+        new_agent = service.create_agent(body.model_dump())
         return jsonify(agent_schemas.AgentRead
                                    .model_validate(new_agent)
                                    .model_dump(mode="json")), 201
 
 @agents_bp.route("/<int:agent_id>", methods=["PUT"])
-def update_agent(agent_id: int) -> FlaskResponse:
+@validate()
+def update_agent(agent_id: int, body: agent_schemas.AgentUpdate) -> FlaskResponse:
     with AgentService() as service:
-        try:
-            data = agent_schemas.AgentUpdate.model_validate(request.json)
-        except ValidationError as e:
-            return jsonify({"error": e.errors()}), 400
-
-        updated_agent = service.update_agent(agent_id, data.model_dump(exclude_unset=True))
+        updated_agent = service.update_agent(agent_id, body.model_dump(exclude_unset=True))
         return jsonify(agent_schemas.AgentRead
                                     .model_validate(updated_agent)
                                     .model_dump(mode="json"))
