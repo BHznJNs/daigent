@@ -154,10 +154,6 @@ export function ModelSelectDialog({
           <DialogTitle>选择模型</DialogTitle>
         </DialogHeader>
 
-        <p className="mb-4 text-muted-foreground text-sm">
-          从可用的供应商中选择一个模型：
-        </p>
-
         {content}
 
         <DialogFooter className="mt-4">

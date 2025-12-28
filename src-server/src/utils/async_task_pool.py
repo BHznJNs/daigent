@@ -12,6 +12,8 @@ TASK_RET = TypeVar("TASK_RET")
 class TaskId(Generic[TASK_RET]):
     uid: uuid.UUID = field(default_factory=uuid.uuid4)
 
+class TaskNotFoundError(Exception): pass
+
 class AsyncTaskPool(threading.Thread):
     def __init__(self):
         super().__init__(daemon=True)
@@ -19,7 +21,7 @@ class AsyncTaskPool(threading.Thread):
         self._loop = asyncio.new_event_loop()
         self._tasks: dict[TaskId, Future] = {}
 
-    def append(self, coro: Coroutine[Any, Any, TASK_RET]) -> TaskId[TASK_RET]:
+    def add_task(self, coro: Coroutine[Any, Any, TASK_RET]) -> TaskId[TASK_RET]:
         task_id = TaskId[TASK_RET]()
         future = asyncio.run_coroutine_threadsafe(coro, self._loop)
         with self._lock:
@@ -28,7 +30,7 @@ class AsyncTaskPool(threading.Thread):
 
     def wait_result(self, task_id: TaskId[TASK_RET]) -> TASK_RET:
         if task_id not in self._tasks:
-            raise ValueError(f"Task {task_id} not found")
+            raise TaskNotFoundError(f"Task {task_id} not found")
 
         with self._lock:
             future = self._tasks[task_id]

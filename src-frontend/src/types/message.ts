@@ -49,20 +49,20 @@ export type UserMessage = {
 
 export type AssistantMessage = {
   role: "assistant";
-  content?: string | null;
-  reasoning_content?: string | null;
-  tool_calls?: ChatCompletionToolCall[] | null;
-  audio?: ChatCompletionAudioResponse | null;
-  images?: ChatCompletionImageURL[] | null;
+  content: string | null;
+  reasoning_content: string | null;
+  tool_calls: ChatCompletionToolCall[] | null;
+  audio: ChatCompletionAudioResponse | null;
+  images: ChatCompletionImageURL[] | null;
 };
 
 export type ToolMessage = {
   role: "tool";
   id: string;
   name: string;
-  arguments: Record<string, unknown>;
-  result: unknown;
-  error?: string;
+  arguments: string;
+  result: string | null;
+  error: string | null;
 };
 
 export type SystemMessage = {

@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { current } from "immer";
 import { Activity, useEffect, useState } from "react";
 import { useImmer } from "use-immer";
 import { createTask, fetchTaskById } from "@/api/task";
 import { useTabsStore } from "@/stores/tabs-store";
 import { useWorkspaceStore } from "@/stores/workspace-store";
-import type { UserMessage } from "@/types/message";
+import type { ToolMessage, UserMessage } from "@/types/message";
 import type { Tab } from "@/types/tab";
 import type { TaskRead } from "@/types/task";
 import { ContinueTask } from "./ContinueTask";
@@ -26,8 +27,8 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
   const queryClient = useQueryClient();
   const { data: taskQueryData, isLoading: taskLoading } = useQuery({
     queryKey: tabData.metadata.isDraft
-      ? ["tasks", "draft"]
-      : ["tasks", tabData.metadata.taskId],
+      ? ["task", "draft"]
+      : ["task", tabData.metadata.taskId],
     enabled: !tabData.metadata.isDraft,
     queryFn: () => {
       if (tabData.metadata.isDraft) {
@@ -62,9 +63,11 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
       return;
     }
     setTaskData(taskQueryData);
-    const lastMessage = taskQueryData.messages.at(-1);
-    if (lastMessage?.role === "user") {
-      setShowContinueTask(true);
+    if (!(tabData.metadata.isDraft || taskRunner.state !== "idle")) {
+      const lastMessage = taskQueryData.messages.at(-1);
+      if (lastMessage?.role === "user") {
+        setShowContinueTask(true);
+      }
     }
   }, [taskQueryData]);
 
@@ -86,16 +89,25 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
         workspace_id: currentWorkspace.id,
         messages: [userMessage],
       });
-
       taskRunner.run(newTask.id, null);
     } else {
+      let toolMessage: ToolMessage | null = null;
       setTaskData((draft) => {
-        if (draft) {
-          draft.messages.push(userMessage);
+        if (!draft) {
+          return;
         }
+        const lastMessage = draft.messages.at(-1);
+        if (lastMessage?.role === "tool") {
+          lastMessage.result = "[System Message] User ignored this tool call.";
+          toolMessage = current(lastMessage);
+        }
+        draft.messages.push(userMessage);
       });
       setShowContinueTask(false);
-      taskRunner.run(tabData.metadata.taskId, userMessage);
+      const appendedMessages = toolMessage
+        ? [toolMessage, userMessage]
+        : [userMessage];
+      taskRunner.run(tabData.metadata.taskId, appendedMessages);
     }
   };
 
@@ -114,7 +126,10 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
       return;
     }
     const changedToolMessage = taskRunner.handleCustomToolAction(...args);
-    taskRunner.run(tabData.metadata.taskId, changedToolMessage);
+    taskRunner.run(
+      tabData.metadata.taskId,
+      changedToolMessage ? [changedToolMessage] : null
+    );
   };
 
   return (
@@ -130,7 +145,7 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
       <PromptInput
         taskType={tabData.metadata.taskType}
         taskData={taskData}
-        isTaskRunning={taskRunner.isRunning}
+        taskState={taskRunner.state}
         onSubmit={handleSubmit}
         onCancel={taskRunner.cancel}
       />

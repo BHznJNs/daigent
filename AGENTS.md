@@ -72,6 +72,8 @@ ORM：SQLAlchemy + Alembic
   - 在 API 路由处将错误转换为错误代码，供前端转换为用户易懂的错误原因
   - 在直接忽略错误时，必须给出解释说明
   - 错误日志应该仅出现在 except 块中，即实际处理错误的块中，raise 语句处禁止打错误日志
+- **参数校验**:
+  - 应该一律使用 `flask-pydantic` 提供的 `@validate` 装饰器来做请求的 body 和 query 的校验
 
 ### 注意事项
 

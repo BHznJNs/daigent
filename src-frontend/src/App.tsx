@@ -1,5 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import type { Panel } from "react-resizable-panels";
+import { useEffect, useRef } from "react";
+import {
+  type PanelSize,
+  useDefaultLayout,
+  useGroupRef,
+  usePanelRef,
+} from "react-resizable-panels";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -10,57 +15,67 @@ import { useConfigStore } from "@/stores/config-store";
 import { ActivityBar } from "./features/ActivityBar/ActivityBar";
 import { SideBar } from "./features/SideBar/SideBar";
 import { Tabs } from "./features/Tabs";
-import { cn } from "./lib/utils";
 import { useSidebarStore } from "./stores/sidebar-store";
 
 function Layout() {
-  const viewportWidth = window.innerWidth;
-  const VIEWPORT_SM_THRESHOLD = 800;
-  const VIEWPORT_MD_THRESHOLD = 1024;
-  const DEFAULT_SIDEBAR_SIZE = (() => {
-    if (viewportWidth < VIEWPORT_SM_THRESHOLD) {
-      return 50;
-    }
-    if (viewportWidth < VIEWPORT_MD_THRESHOLD) {
-      return 45;
-    }
-    return 35;
-  })();
-  const DEFAULT_MAIN_SIZE = 100 - DEFAULT_SIDEBAR_SIZE;
+  const { defaultLayout, onLayoutChange } = useDefaultLayout({
+    id: "panels",
+    storage: localStorage,
+  });
 
   const { isOpen, openSidebar, closeSidebar } = useSidebarStore();
-  const [isDragging, setIsDragging] = useState(false);
-  const sideBarPanelRef = useRef<React.ElementRef<typeof Panel>>(null);
+  const recentPanelSizePx = useRef(0);
+  const groupRef = useGroupRef();
+  const sideBarPanelRef = usePanelRef();
+
+  const handleSideBarResize = (
+    panelSize: PanelSize,
+    _: string | number | undefined
+  ) => {
+    if (panelSize.asPercentage === 0) {
+      closeSidebar();
+    } else {
+      openSidebar();
+      recentPanelSizePx.current = panelSize.inPixels;
+    }
+  };
 
   useEffect(() => {
-    if (isOpen) {
-      sideBarPanelRef.current?.expand();
-    } else {
-      sideBarPanelRef.current?.collapse();
+    if (groupRef.current === null || sideBarPanelRef.current === null) {
+      return;
+    }
+    try {
+      if (isOpen) {
+        sideBarPanelRef.current.resize(recentPanelSizePx.current);
+      } else {
+        sideBarPanelRef.current.collapse();
+      }
+    } catch (e) {
+      console.warn(e);
     }
   }, [isOpen]);
 
   return (
     <div className="flex h-full">
       <ActivityBar />
-      <ResizablePanelGroup direction="horizontal" className="h-full">
+      <ResizablePanelGroup
+        className="h-full"
+        orientation="horizontal"
+        groupRef={groupRef}
+        onLayoutChange={onLayoutChange}
+        defaultLayout={defaultLayout}
+      >
         <ResizablePanel
-          ref={sideBarPanelRef}
-          defaultSize={isOpen ? DEFAULT_SIDEBAR_SIZE : 0}
-          minSize={30}
-          maxSize={80}
-          collapsible={true}
-          collapsedSize={0}
-          className={cn(
-            !isDragging && "transition-all duration-300 ease-in-out"
-          )}
-          onCollapse={closeSidebar}
-          onExpand={openSidebar}
+          panelRef={sideBarPanelRef}
+          minSize={200}
+          maxSize={"75%"}
+          collapsible
+          onResize={handleSideBarResize}
         >
           <SideBar />
         </ResizablePanel>
-        <ResizableHandle onDragging={setIsDragging} />
-        <ResizablePanel defaultSize={DEFAULT_MAIN_SIZE} minSize={20}>
+        <ResizableHandle />
+        <ResizablePanel minSize={20}>
           <Tabs />
         </ResizablePanel>
       </ResizablePanelGroup>

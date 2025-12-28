@@ -15,7 +15,7 @@ type TaskConversationProps = {
   onCustomToolAction?: (
     toolMessageId: string,
     event: string,
-    data: unknown
+    data: string
   ) => void;
 };
 
@@ -47,7 +47,7 @@ export function TaskConversation({
             return (
               <TextMessage
                 key={index}
-                text={message.content as string}
+                text={message.content as string | null}
                 from={message.role}
               />
             );

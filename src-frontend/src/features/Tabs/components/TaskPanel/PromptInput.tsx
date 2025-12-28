@@ -1,3 +1,4 @@
+import type { ChatStatus } from "ai";
 import { Activity, useEffect, useState } from "react";
 import {
   PromptInput as BasePromptInput,
@@ -14,21 +15,28 @@ import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { AgentRead } from "@/types/agent";
 import type { TaskRead, TaskType } from "@/types/task";
 import { AgentSelector } from "./AgentSelector";
+import type { TaskState } from "./use-task-runner";
 
 type PromptInputProps = {
   taskType: TaskType;
   taskData: TaskRead | null;
-  isTaskRunning: boolean;
+  taskState: TaskState;
   onSubmit: (message: PromptInputMessage, agentId: number) => void;
   onCancel?: () => void;
 };
 
 export type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 
+const stateMapping = {
+  idle: "ready",
+  waiting: "submitted",
+  running: "streaming",
+} satisfies Record<TaskState, ChatStatus>;
+
 export function PromptInput({
   taskType,
   taskData,
-  isTaskRunning,
+  taskState,
   onSubmit,
   onCancel,
 }: PromptInputProps) {
@@ -48,13 +56,13 @@ export function PromptInput({
     }
   }, [taskData, currentWorkspace]);
 
+  console.log(taskState);
+
   return (
     <BasePromptInput
       className="rounded-md bg-background"
       onSubmit={(message) => {
-        if (isTaskRunning) {
-          onCancel?.();
-        } else {
+        if (taskState === "idle") {
           setPrompt("");
           onSubmit(message, selectedAgent?.id ?? ORCHESTRATOR_ID);
         }
@@ -81,8 +89,21 @@ export function PromptInput({
           </Activity>
         </PromptInputTools>
         <PromptInputSubmit
-          status={isTaskRunning ? "streaming" : "ready"}
-          disabled={!(isTaskRunning || ableToSubmit)}
+          status={stateMapping[taskState]}
+          disabled={(() => {
+            if (taskState === "running") {
+              return false;
+            }
+            if (taskState === "waiting") {
+              return true;
+            }
+            return !ableToSubmit;
+          })()}
+          onClick={() => {
+            if (taskState === "running") {
+              onCancel?.();
+            }
+          }}
         />
       </PromptInputFooter>
     </BasePromptInput>

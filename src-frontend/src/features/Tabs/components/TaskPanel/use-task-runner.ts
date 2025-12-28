@@ -6,21 +6,23 @@ import { resumeTask } from "@/api/task";
 import type { ToolCallChunk, ToolMessage, UserMessage } from "@/types/message";
 import type { TaskRead } from "@/types/task";
 
+export type TaskState = "idle" | "waiting" | "running";
+
 export type TaskRunner = {
-  run: (taskId: number, message: UserMessage | ToolMessage | null) => void;
+  run: (taskId: number, messages: (UserMessage | ToolMessage)[] | null) => void;
+  cancel: () => void;
   handleCustomToolAction: (
     toolMessageId: string,
     event: string,
-    data: unknown
+    data: string
   ) => ToolMessage | null;
-  cancel: () => void;
-  isRunning: boolean;
+  state: TaskState;
 };
 
 export function useTaskRunner(
   setTaskData: Updater<TaskRead | null>
 ): TaskRunner {
-  const [isRunning, setIsRunning] = useState(false);
+  const [state, setState] = useState<TaskState>("idle");
   const abortController = useRef<AbortController | null>(null);
   const toolCallsBuffer = useRef(
     new Map<
@@ -46,6 +48,10 @@ export function useTaskRunner(
       draft.messages.push({
         role: "assistant",
         content: text,
+        reasoning_content: null,
+        tool_calls: null,
+        audio: null,
+        images: null,
       });
     });
   };
@@ -70,12 +76,16 @@ export function useTaskRunner(
     }
   };
 
-  const run = (taskId: number, message: UserMessage | ToolMessage | null) => {
+  const run = (
+    taskId: number,
+    messages: (UserMessage | ToolMessage)[] | null
+  ) => {
+    setState("waiting");
     abortController.current?.abort();
-    setIsRunning(true);
 
-    abortController.current = resumeTask(taskId, message, {
+    abortController.current = resumeTask(taskId, messages, {
       onMessageStart: () => {
+        setState("running");
         toolCallsBuffer.current.clear();
         setTaskData((draft) => {
           if (!draft) {
@@ -84,6 +94,10 @@ export function useTaskRunner(
           draft.messages.push({
             role: "assistant",
             content: "",
+            reasoning_content: null,
+            tool_calls: null,
+            audio: null,
+            images: null,
           });
         });
       },
@@ -107,42 +121,45 @@ export function useTaskRunner(
           }
 
           for (const toolCall of toolCallsBuffer.current.values()) {
-            let parsedArguments: Record<string, unknown>;
-            try {
-              parsedArguments = JSON.parse(toolCall.arguments);
-            } catch (error) {
-              console.error("Failed to parse tool arguments:", error);
-              // 即使解析失败也创建消息，但使用空对象
-              draft.messages.push({
-                role: "tool",
-                id: toolCall.id,
-                name: toolCall.name,
-                arguments: {},
-                result: null,
-              } satisfies ToolMessage);
-              return;
-            }
             draft.messages.push({
               role: "tool",
               id: toolCall.id,
               name: toolCall.name,
-              arguments: parsedArguments,
+              arguments: toolCall.arguments,
               result: null,
+              error: null,
             } satisfies ToolMessage);
           }
 
           toolCallsBuffer.current.clear();
         });
       },
+      onToolResult: (toolResult) => {
+        setTaskData((draft) => {
+          if (!draft) {
+            return;
+          }
+          const toolMessage = draft.messages.find(
+            (m) => m.role === "tool" && m.id === toolResult.tool_call_id
+          ) as ToolMessage | undefined;
+          if (toolMessage === undefined) {
+            console.warn(`Tool message not found: ${toolResult.tool_call_id}`);
+            return;
+          }
+          toolMessage.result = toolResult.result;
+        });
+      },
       onError: (error) => {
         toast.error("任务失败", {
           description: error.message || "任务失败，请稍后重试。",
         });
-        setIsRunning(false);
+        abortController.current = null;
+        setState("idle");
       },
       onClose: () => {
         abortController.current = null;
-        setIsRunning(false);
+        console.log("Task closed");
+        setState("idle");
       },
     });
   };
@@ -150,7 +167,7 @@ export function useTaskRunner(
   const handleCustomToolAction = (
     toolMessageId: string,
     _event: string,
-    data: unknown
+    data: string
   ) => {
     let changedToolMessage: ToolMessage | null = null;
     setTaskData((draft) => {
@@ -167,14 +184,13 @@ export function useTaskRunner(
       toolMessage.result = data;
       changedToolMessage = current(toolMessage);
     });
-    console.log(changedToolMessage);
     return changedToolMessage;
   };
 
   const cancel = () => {
     abortController.current?.abort();
     abortController.current = null;
-    setIsRunning(false);
+    setState("idle");
   };
 
   // cancel when unmount
@@ -182,8 +198,8 @@ export function useTaskRunner(
 
   return {
     run,
-    handleCustomToolAction,
     cancel,
-    isRunning,
+    handleCustomToolAction,
+    state,
   };
 }

@@ -53,11 +53,17 @@ type TaskSseCallbacks = {
   onMessageStart?: () => void;
   onMessageEnd?: () => void;
   onMessageChunk?: (chunk: AssistantMessageChunkData) => void;
+  onToolResult?: (toolResult: { tool_call_id: string; result: string }) => void;
   onError?: (error: Error) => void;
   onClose?: () => void;
 };
-type TaskSentinel = "MESSAGE_START" | "MESSAGE_END" | "DONE";
-type SseEvent = "assistant_chunk" | TaskSentinel | "error";
+type TaskSentinel =
+  | "MESSAGE_START"
+  | "MESSAGE_END"
+  | "TOOL_RESULT"
+  | "INTERRUPTED"
+  | "DONE";
+type SseEvent = "ASSISTANT_CHUNK" | TaskSentinel | "ERROR";
 type AssistantMessageChunkData =
   | {
       type: "text";
@@ -70,7 +76,7 @@ type AssistantMessageChunkData =
 
 export function resumeTask(
   taskId: number,
-  message: ToolMessage | UserMessage | null,
+  messages: (ToolMessage | UserMessage)[] | null,
   callbacks: TaskSseCallbacks
 ): AbortController {
   const abortController = new AbortController();
@@ -80,7 +86,7 @@ export function resumeTask(
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ messages }),
     signal: abortController.signal,
 
     async onopen(response) {
@@ -104,11 +110,14 @@ export function resumeTask(
         const data = JSON.parse(event.data);
 
         switch (event.event as SseEvent) {
-          case "assistant_chunk":
+          case "ASSISTANT_CHUNK":
             callbacks.onMessageChunk?.(data as AssistantMessageChunkData);
             break;
-          case "error":
+          case "ERROR":
             callbacks.onError?.(new Error(data.message));
+            break;
+          case "TOOL_RESULT":
+            callbacks.onToolResult?.(data);
             break;
           case "MESSAGE_START":
             callbacks.onMessageStart?.();

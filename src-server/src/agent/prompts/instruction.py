@@ -32,7 +32,8 @@ To ensure the best user experience within the desktop UI:
 
 ## 4. Tool Usage Guidelines
 
-- You should call tool in every response. Once you can confirm that the task is complete, use `attempt_completion` tool to present the result of your work to the user.
+- Continue using tool in every response. Once you can confirm that the task is complete, use `finish_task` tool to present the result of your work to the user.
+- **Constraint**: You are strictly limited to generating exactly one tool call per turn.
 
 ## 5. Safety & Security
 

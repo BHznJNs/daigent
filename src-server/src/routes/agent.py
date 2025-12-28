@@ -1,18 +1,21 @@
 from flask import Blueprint, Response, jsonify, request
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
+from flask_pydantic import validate
 from .utils import FlaskResponse
 from ..services.agent import AgentService
 from ..db.schemas import agent as agent_schemas
 
 agents_bp = Blueprint("agents", __name__)
 
-@agents_bp.route("/", methods=["GET"])
-def get_agents() -> FlaskResponse:
-    page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 10, type=int)
+class AgentsQueryModel(BaseModel):
+    page: int = 1
+    per_page: int = 10
 
+@agents_bp.route("/", methods=["GET"])
+@validate()
+def get_agents(query: AgentsQueryModel) -> FlaskResponse:
     with AgentService() as service:
-        result = service.get_agents(page, per_page)
+        result = service.get_agents(query.page, query.per_page)
 
         serialized_items = [
             agent_schemas.AgentRead

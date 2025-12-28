@@ -1,4 +1,4 @@
-def ask_user(question: str, options: list[str] | None = None):
+def ask_user(question: str, options: list[str] | None = None) -> str:
     """
     Ask the user for additional information that is required to make progress.
     This tool can be used in two ways:
@@ -9,4 +9,4 @@ def ask_user(question: str, options: list[str] | None = None):
         question: The question to ask the user.
         options: The options to ask the user. If not provided, the user can respond with a text message.
     """
-    pass
+    ...

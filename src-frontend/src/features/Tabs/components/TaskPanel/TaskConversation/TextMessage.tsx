@@ -5,11 +5,12 @@ import {
 } from "@/components/ai-elements/message";
 
 type TextMessageProps = {
-  text: string;
+  text: string | null;
   from: "user" | "assistant";
 };
+
 export function TextMessage({ text, from }: TextMessageProps) {
-  if (text.trim() === "") {
+  if (text === null || text.trim() === "") {
     return null;
   }
   return (

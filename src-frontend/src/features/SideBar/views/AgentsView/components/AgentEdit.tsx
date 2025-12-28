@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, useEffect } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { createAgent, deleteAgent, updateAgent } from "@/api/agent";
 import { fetchModelById } from "@/api/llm-model";
@@ -29,11 +29,8 @@ type FormValues = AgentCreate;
 export function AgentEdit({ agent, onSuccess, onCancel }: AgentEditProps) {
   const isEditMode = "id" in agent;
   const queryClient = useQueryClient();
-  const modelId = (isEditMode ? agent.model?.id : agent.model_id) ?? null;
-  const { data: model } = useQuery({
-    queryKey: ["llm_models", modelId],
-    queryFn: () => (modelId ? fetchModelById(modelId) : null),
-  });
+  const initialModelId =
+    (isEditMode ? agent.model?.id : agent.model_id) ?? null;
 
   const {
     handleSubmit,
@@ -42,6 +39,16 @@ export function AgentEdit({ agent, onSuccess, onCancel }: AgentEditProps) {
     formState: { errors },
   } = useForm<FormValues>({
     defaultValues: DEFAULT_AGENT,
+  });
+
+  const currentModelId = useWatch({
+    control,
+    name: "model_id",
+  });
+
+  const { data: model } = useQuery({
+    queryKey: ["llm_models", currentModelId],
+    queryFn: () => (currentModelId ? fetchModelById(currentModelId) : null),
   });
 
   const createAgentMutation = useMutation({
@@ -107,9 +114,9 @@ export function AgentEdit({ agent, onSuccess, onCancel }: AgentEditProps) {
     reset({
       name: agent.name,
       system_prompt: agent.system_prompt,
-      model_id: modelId,
+      model_id: initialModelId,
     });
-  }, [agent, reset]);
+  }, [agent, reset, initialModelId]);
 
   const onSubmit = (data: FormValues) => {
     if (isEditMode && "id" in agent) {
