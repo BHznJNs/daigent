@@ -29,7 +29,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useTabsStore } from "@/stores/tabs-store";
 import type { Tab } from "@/types/tab";
-import { TaskPanel } from "./components/TaskPanel";
+import { TaskPanel } from "./TaskPanel";
 
 function SortableTab({ tab }: { tab: Tab }) {
   const { attributes, listeners, setNodeRef, transform, transition } =

@@ -4,7 +4,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { createAgent, deleteAgent, updateAgent } from "@/api/agent";
 import { fetchModelById } from "@/api/llm-model";
-import { ConfirmDeleteDialog } from "@/components/ConfirmDeteteDialog";
+import { ConfirmDeleteDialog } from "@/components/custom/dialog/ConfirmDeteteDialog";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -180,7 +180,7 @@ export function AgentEdit({ agent, onSuccess, onCancel }: AgentEditProps) {
                 <FieldLabel>关联模型</FieldLabel>
                 <ModelSelectDialog
                   selectedModelId={field.value}
-                  onConfirm={field.onChange}
+                  onSelect={field.onChange}
                 >
                   <Button variant="outline">
                     {field.value ? model?.name : "选择模型"}

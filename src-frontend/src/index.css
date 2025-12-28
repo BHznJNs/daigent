@@ -3,6 +3,7 @@
 @import "@/styles/base.css";
 @import "@/styles/global.css";
 @import "@/styles/user-select.css";
+@import "@/styles/scroll-bar.css";
 @import "@/styles/ai-elements-patch.css";
 
 @custom-variant dark (&:where(.dark, .dark *));

@@ -8,7 +8,7 @@ import {
   deleteWorkspace,
   updateWorkspace,
 } from "@/api/workspace";
-import { ConfirmDeleteDialog } from "@/components/ConfirmDeteteDialog";
+import { ConfirmDeleteDialog } from "@/components/custom/dialog/ConfirmDeteteDialog";
 import { Button } from "@/components/ui/button";
 import {
   Field,

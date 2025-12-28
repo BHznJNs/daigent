@@ -3,7 +3,7 @@ import { Activity, useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { createProvider, deleteProvider, updateProvider } from "@/api/provider";
-import { ConfirmDeleteDialog } from "@/components/ConfirmDeteteDialog";
+import { ConfirmDeleteDialog } from "@/components/custom/dialog/ConfirmDeteteDialog";
 import { PasswordInput } from "@/components/Password";
 import { Button } from "@/components/ui/button";
 import {

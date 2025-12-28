@@ -67,8 +67,8 @@ function Layout() {
       >
         <ResizablePanel
           panelRef={sideBarPanelRef}
-          minSize={200}
-          maxSize={"75%"}
+          minSize={300}
+          maxSize={"60%"}
           collapsible
           onResize={handleSideBarResize}
         >

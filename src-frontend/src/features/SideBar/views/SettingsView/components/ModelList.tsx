@@ -92,7 +92,7 @@ export function ModelList({ models, onChange, provider }: ModelListProps) {
         tool_use: false,
       },
     }));
-    onChange([...models, ...modelsToAdd]);
+    onChange(modelsToAdd);
   };
 
   const handleDelete = (index: number) => {

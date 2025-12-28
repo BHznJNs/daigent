@@ -1,0 +1,14 @@
+.shadcn-scroll::-webkit-scrollbar {
+  width: 0.5rem;
+  height: 100%;
+}
+
+.shadcn-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.shadcn-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 9999px;
+  background-clip: content-box;
+}

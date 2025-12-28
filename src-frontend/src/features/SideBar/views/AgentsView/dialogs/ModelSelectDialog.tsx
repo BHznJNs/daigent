@@ -1,170 +1,89 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { fetchProviders } from "@/api/provider";
-import { SelectionItem } from "@/components/custom/item/SelectionItem";
-import { FailedToLoad } from "@/components/FailedToLoad";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { ProviderRead } from "@/types/provider";
+import { GroupedSingleSelectDialog } from "@/components/custom/dialog/SingleSelectDialog";
+import type { LlmModelRead } from "@/types/provider";
 
 type ModelSelectDialogProps = {
   children: React.ReactNode;
   selectedModelId: number | null;
-  onCancel?: () => void;
-  onConfirm?: (modelId: number | null) => void;
+  onSelect?: (modelId: number | null) => void;
 };
-
-function ModelListSkeleton() {
-  return (
-    <div className="space-y-2">
-      {Array.from({ length: 3 }).map((_, index) => (
-        <div
-          key={`model-skeleton-${Date.now()}-${index}`}
-          className="flex items-center justify-between rounded-lg border p-3"
-        >
-          <Skeleton className="h-4 w-48" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ProviderCard(
-  index: number,
-  provider: ProviderRead,
-  tempSelectedModelId: number | null,
-  handleModelClick: (modelId: number) => void
-) {
-  return (
-    <Card className="bg-card/33" key={index}>
-      <CardHeader>
-        <CardTitle>{provider.name}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {provider.models.map((model) => {
-          const isSelected = tempSelectedModelId === model.id;
-          return (
-            <SelectionItem
-              key={model.id}
-              className="bg-card"
-              value={model.id}
-              label={model.name}
-              isSelected={isSelected}
-              handleToggle={handleModelClick}
-            />
-          );
-        })}
-      </CardContent>
-    </Card>
-  );
-}
 
 export function ModelSelectDialog({
   children,
   selectedModelId,
-  onCancel,
-  onConfirm,
+  onSelect,
 }: ModelSelectDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-
-  const [tempSelectedModelId, setTempSelectedModelId] = useState<number | null>(
-    selectedModelId
-  );
 
   const {
     data: providers,
     isLoading,
     isError,
-    refetch,
   } = useQuery({
     queryKey: ["providers"],
     queryFn: fetchProviders,
     enabled: isOpen,
   });
 
-  const handleModelClick = (modelId: number) => {
-    if (tempSelectedModelId === modelId) {
-      setTempSelectedModelId(null);
-    } else {
-      setTempSelectedModelId(modelId);
+  const groups = useMemo(() => {
+    if (!providers) {
+      return [];
     }
-  };
+    return providers.map((provider) => ({
+      heading: provider.name,
+      items: provider.models,
+    }));
+  }, [providers]);
 
-  const handleConfirm = () => {
-    onConfirm?.(tempSelectedModelId);
+  const selectedModel = useMemo(() => {
+    if (!providers || selectedModelId === null) {
+      return null;
+    }
+    for (const provider of providers) {
+      const model = provider.models.find((m) => m.id === selectedModelId);
+      if (model) {
+        return model;
+      }
+    }
+    return null;
+  }, [providers, selectedModelId]);
+
+  const handleSelect = (model: LlmModelRead) => {
+    // 如果选择的是已选中的模型，则取消选择
+    if (model.id === selectedModelId) {
+      onSelect?.(null);
+    } else {
+      onSelect?.(model.id);
+    }
     setIsOpen(false);
   };
 
-  const content = (() => {
+  const emptyText = (() => {
     if (isLoading) {
-      return <ModelListSkeleton />;
+      return "加载中...";
     }
-
     if (isError) {
-      return (
-        <FailedToLoad
-          refetch={refetch}
-          description="无法加载供应商和模型列表，请稍后重试。"
-        />
-      );
+      return "无法加载供应商和模型列表，请稍后重试。";
     }
-
     if (!providers || providers.length === 0) {
-      return (
-        <Empty>
-          <EmptyContent>
-            <EmptyTitle>暂无供应商</EmptyTitle>
-            <EmptyDescription>请先添加 LLM 供应商以使用模型。</EmptyDescription>
-          </EmptyContent>
-        </Empty>
-      );
+      return "暂无供应商，请先添加 LLM 供应商以使用模型。";
     }
-
-    return (
-      <ScrollArea className="max-h-[60vh]">
-        {providers.map((provider, index) =>
-          ProviderCard(index, provider, tempSelectedModelId, handleModelClick)
-        )}
-      </ScrollArea>
-    );
+    return "未找到模型";
   })();
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="flex flex-col sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>选择模型</DialogTitle>
-        </DialogHeader>
-
-        {content}
-
-        <DialogFooter className="mt-4">
-          <DialogClose asChild>
-            <Button variant="outline" onClick={onCancel}>
-              取消
-            </Button>
-          </DialogClose>
-          <Button onClick={handleConfirm}>确认</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <GroupedSingleSelectDialog
+      value={selectedModel ?? undefined}
+      groups={groups}
+      getKey={(model) => model.id}
+      getValue={(model) => model.name}
+      onSelect={handleSelect}
+      placeholder="搜索模型..."
+      emptyText={emptyText}
+    >
+      {children}
+    </GroupedSingleSelectDialog>
   );
 }
