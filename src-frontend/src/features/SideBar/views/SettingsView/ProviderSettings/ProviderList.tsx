@@ -75,7 +75,7 @@ type ProviderItemProps = {
 
 function ProviderItem({ provider }: ProviderItemProps) {
   const queryClient = useQueryClient();
-  const { tabs, addTab, setActiveTab } = useTabsStore();
+  const { tabs, addTab, setActiveTab, removeTab } = useTabsStore();
 
   const PROVIDER_TYPE_COLORS: Record<LlmProviders, string> = {
     openai: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
@@ -99,6 +99,18 @@ function ProviderItem({ provider }: ProviderItemProps) {
     mutationFn: deleteProvider,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["providers"] });
+
+      const tabsToRemove = tabs.filter(
+        (tab) =>
+          tab.type === "provider" &&
+          tab.metadata.mode === "edit" &&
+          tab.metadata.id === provider.id
+      );
+
+      for (const tab of tabsToRemove) {
+        removeTab(tab.id);
+      }
+
       toast.success("删除成功", {
         description: "已成功删除服务提供商。",
       });

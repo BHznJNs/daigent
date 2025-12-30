@@ -10,7 +10,7 @@ import {
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import {
   arrayMove,
-  rectSortingStrategy,
+  horizontalListSortingStrategy,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
@@ -36,11 +36,13 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useTabsStore } from "@/stores/tabs-store";
 import type {
+  AgentTabMetadata,
   ProviderTabMetadata,
   Tab,
   TaskTabMetadata,
   WorkspaceTabMetadata,
 } from "@/types/tab";
+import { AgentPanel } from "./AgentPanel";
 import { ProviderPanel } from "./ProviderPanel";
 import { TaskPanel } from "./TaskPanel";
 import { WorkspacePanel } from "./WorkspacePanel";
@@ -48,6 +50,7 @@ import { WorkspacePanel } from "./WorkspacePanel";
 const tabIconMap: Record<Tab["type"], LucideIcon> = {
   task: BotIcon,
   workspace: FolderCogIcon,
+  agent: BotIcon,
   provider: PlugIcon,
 };
 
@@ -56,13 +59,19 @@ export type TabPanelProps<Metadata> = {
   metadata: Metadata;
 };
 
-function SortableTab({ tab }: { tab: Tab }) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: tab.id });
+function SortableTab({ tab, ...props }: { tab: Tab; props: unknown }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: tab.id });
   const { activeTabId, removeTab, setActiveTab } = useTabsStore();
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
   };
 
@@ -91,8 +100,17 @@ function SortableTab({ tab }: { tab: Tab }) {
   })();
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn("flex", {
+        "z-10 border-l": isDragging,
+      })}
+      {...attributes}
+      {...listeners}
+    >
       <ReactTab
+        {...props}
         key={tab.id}
         onMouseDown={(e) => handleMouseDown(e, tab.id)}
         className={cn(
@@ -133,6 +151,13 @@ function TabPanelRenderer({ tab }: { tab: Tab }) {
         <WorkspacePanel
           tabId={tab.id}
           metadata={tab.metadata as WorkspaceTabMetadata}
+        />
+      );
+    case "agent":
+      return (
+        <AgentPanel
+          tabId={tab.id}
+          metadata={tab.metadata as AgentTabMetadata}
         />
       );
     case "provider":
@@ -218,10 +243,13 @@ export function Tabs() {
         <ScrollArea ref={scrollAreaRef}>
           <SortableContext
             items={tabs.map((tab) => tab.id)}
-            strategy={rectSortingStrategy}
+            strategy={horizontalListSortingStrategy}
           >
             <ReactTabList className="shink-0 flex bg-muted/40">
               {tabs.map((tab) => (
+                // @ts-expect-error
+                // The props defined in the SortableTab will be passed automatically
+                // by the react-tabs library
                 <SortableTab key={tab.id} tab={tab} />
               ))}
             </ReactTabList>

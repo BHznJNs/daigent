@@ -114,7 +114,7 @@ function WorkspaceItem({
   onSelect,
 }: WorkspaceItemProps) {
   const queryClient = useQueryClient();
-  const { tabs, addTab, setActiveTab } = useTabsStore();
+  const { tabs, addTab, setActiveTab, removeTab } = useTabsStore();
   const { currentWorkspace, setCurrentWorkspace } = useWorkspaceStore();
 
   const handleSelect = (e: React.MouseEvent) => {
@@ -125,7 +125,6 @@ function WorkspaceItem({
     e.stopPropagation();
   };
 
-  // 打开编辑 tab
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     openWorkspaceEditTab({
@@ -137,16 +136,27 @@ function WorkspaceItem({
     });
   };
 
-  // 删除 mutation
   const deleteWorkspaceMutation = useMutation({
     mutationFn: deleteWorkspace,
     onSuccess: async (_data, deletedId) => {
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+
+      const tabsToRemove = tabs.filter(
+        (tab) =>
+          tab.type === "workspace" &&
+          tab.metadata.mode === "edit" &&
+          tab.metadata.id === deletedId
+      );
+
+      for (const tab of tabsToRemove) {
+        removeTab(tab.id);
+      }
+
       toast.success("删除成功", {
         description: "已成功删除工作区。",
       });
 
-      // 如果删除的是当前工作区，清空当前工作区
+      // clear current workspace if deleted
       if (deletedId === currentWorkspace?.id) {
         await setCurrentWorkspace(null);
       }
@@ -186,7 +196,6 @@ function WorkspaceItem({
         <ItemTitle>{workspace.name}</ItemTitle>
         <ItemDescription>{workspace.directory}</ItemDescription>
       </ItemContent>
-      {/* 操作按钮组 */}
       <div className="flex items-center gap-1">
         <Button
           variant="ghost"

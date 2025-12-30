@@ -2,7 +2,7 @@ from flask import Blueprint, Response, jsonify
 from pydantic import BaseModel
 from flask_pydantic import validate
 from .types import FlaskResponse, PaginatedResponse
-from ..services.agent import AgentService
+from ..services.agent import AgentService, AgentNotFoundError
 from ..db.schemas import agent as agent_schemas
 
 agents_bp = Blueprint("agents", __name__)
@@ -39,6 +39,16 @@ def get_agents_brief() -> FlaskResponse:
                                      .model_validate(agent)
                                      .model_dump(mode="json")
                         for agent in agents])
+
+@agents_bp.route("/<int:agent_id>", methods=["GET"])
+def get_agent(agent_id: int) -> FlaskResponse:
+    with AgentService() as service:
+        agent = service.get_agent_by_id(agent_id)
+        if not agent:
+            raise AgentNotFoundError(f"Agent {agent_id} not found")
+        return jsonify(agent_schemas.AgentRead
+                                   .model_validate(agent)
+                                   .model_dump(mode="json"))
 
 @agents_bp.route("/", methods=["POST"])
 @validate()

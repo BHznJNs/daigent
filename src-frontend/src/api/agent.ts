@@ -24,6 +24,10 @@ export async function fetchAgentsBrief(): Promise<AgentBrief[]> {
   return await fetchApi<AgentBrief[]>(`${API_BASE}/agents/brief`);
 }
 
+export async function fetchAgentById(id: number): Promise<AgentRead> {
+  return await fetchApi<AgentRead>(`${API_BASE}/agents/${id}`);
+}
+
 export async function createAgent(agentData: AgentCreate): Promise<AgentRead> {
   return await fetchApi<AgentRead>(`${API_BASE}/agents/`, {
     method: "POST",

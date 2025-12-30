@@ -1,18 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
+import { Loader2Icon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { fetchProviders } from "@/api/provider";
 import { GroupedSingleSelectDialog } from "@/components/custom/dialog/SingleSelectDialog";
+import { Button } from "@/components/ui/button";
 import type { LlmModelRead } from "@/types/provider";
 
 type ModelSelectDialogProps = {
-  children: React.ReactNode;
-  selectedModelId: number | null;
-  onSelect?: (modelId: number | null) => void;
+  selectedModel: LlmModelRead | null;
+  onSelect: (modelId: LlmModelRead) => void;
 };
 
 export function ModelSelectDialog({
-  children,
-  selectedModelId,
+  selectedModel,
   onSelect,
 }: ModelSelectDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,33 +37,7 @@ export function ModelSelectDialog({
     }));
   }, [providers]);
 
-  const selectedModel = useMemo(() => {
-    if (!providers || selectedModelId === null) {
-      return null;
-    }
-    for (const provider of providers) {
-      const model = provider.models.find((m) => m.id === selectedModelId);
-      if (model) {
-        return model;
-      }
-    }
-    return null;
-  }, [providers, selectedModelId]);
-
-  const handleSelect = (model: LlmModelRead) => {
-    // 如果选择的是已选中的模型，则取消选择
-    if (model.id === selectedModelId) {
-      onSelect?.(null);
-    } else {
-      onSelect?.(model.id);
-    }
-    setIsOpen(false);
-  };
-
   const emptyText = (() => {
-    if (isLoading) {
-      return "加载中...";
-    }
     if (isError) {
       return "无法加载供应商和模型列表，请稍后重试。";
     }
@@ -79,11 +53,15 @@ export function ModelSelectDialog({
       groups={groups}
       getKey={(model) => model.id}
       getValue={(model) => model.name}
-      onSelect={handleSelect}
+      onSelect={(model) => onSelect(model)}
+      onOpenChange={(open) => setIsOpen(open)}
       placeholder="搜索模型..."
       emptyText={emptyText}
     >
-      {children}
+      <Button variant="outline" disabled={isLoading}>
+        {isLoading && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+        {selectedModel ? selectedModel.name : "选择模型"}
+      </Button>
     </GroupedSingleSelectDialog>
   );
 }

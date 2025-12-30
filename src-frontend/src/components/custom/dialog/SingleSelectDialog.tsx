@@ -19,6 +19,7 @@ type BaseSelectDialogProps<Selection> = {
   getValue?: (selection: Selection) => string;
   getLabel?: (selection: Selection) => string;
   onSelect: (value: Selection) => void;
+  onOpenChange?: (open: boolean) => void;
   emptyText?: string;
   placeholder?: string;
 };
@@ -35,6 +36,7 @@ export function SingleSelectDialog<Selection>({
   getValue = (selection: Selection) => selection as string,
   getLabel,
   onSelect,
+  onOpenChange,
   placeholder = "Search...",
   emptyText = "No results found.",
 }: SingleSelectDialogProps<Selection>) {
@@ -45,8 +47,13 @@ export function SingleSelectDialog<Selection>({
     setOpen(false);
   };
 
+  const handleOpenChange = (open_: boolean) => {
+    setOpen(open_);
+    onOpenChange?.(open_);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent showCloseButton={false} className="p-0">
         <Command>
@@ -102,6 +109,7 @@ export function GroupedSingleSelectDialog<Selection>({
   getValue = (selection: Selection) => selection as string,
   getLabel,
   onSelect,
+  onOpenChange,
   placeholder = "Search...",
   emptyText = "No results found.",
 }: GroupedSingleSelectDialogProps<Selection>) {
@@ -112,8 +120,13 @@ export function GroupedSingleSelectDialog<Selection>({
     setOpen(false);
   };
 
+  const handleOpenChange = (open_: boolean) => {
+    setOpen(open_);
+    onOpenChange?.(open_);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent showCloseButton={false} className="p-0">
         <Command>

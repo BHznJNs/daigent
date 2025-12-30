@@ -1,20 +1,32 @@
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
-import { Activity, Suspense, useState } from "react";
+import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { FailedToLoad } from "@/components/FailedToLoad";
 import { Button } from "@/components/ui/button";
-import { DEFAULT_AGENT } from "@/constants/agent";
+import { tabIdFactory } from "@/lib/tab";
+import { useTabsStore } from "@/stores/tabs-store";
+import type { Tab } from "@/types/tab";
 import { SideBarHeader } from "../../SideBar";
-import { AgentEdit } from "./components/AgentEdit";
-import { AgentList } from "./components/AgentList";
-import { AgentListSkeleton } from "./components/AgentListSkeleton";
+import { AgentList } from "./AgentList";
+import { AgentListSkeleton } from "./AgentListSkeleton";
+
+function createAgentCreateTab(): Tab {
+  return {
+    id: tabIdFactory(),
+    type: "agent",
+    title: "创建 Agent",
+    icon: "bot",
+    metadata: { mode: "create" },
+  };
+}
 
 export function AgentsView() {
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const { addTab } = useTabsStore();
 
   const handleCreateAgent = () => {
-    setShowCreateForm(true);
+    const newTab = createAgentCreateTab();
+    addTab(newTab);
   };
 
   return (
@@ -55,13 +67,6 @@ export function AgentsView() {
             </ErrorBoundary>
           )}
         </QueryErrorResetBoundary>
-        <Activity mode={showCreateForm ? "visible" : "hidden"}>
-          <AgentEdit
-            agent={DEFAULT_AGENT}
-            onSuccess={() => setShowCreateForm(false)}
-            onCancel={() => setShowCreateForm(false)}
-          />
-        </Activity>
       </div>
     </div>
   );
