@@ -20,7 +20,7 @@ import type {
   ProviderCreate,
   ProviderRead,
 } from "@/types/provider";
-import { ModelEditDialog } from "../dialogs/ModelEditDialog";
+import { ModelEditDialog } from "./ModelEditDialog";
 
 type LlmModel = LlmModelCreate | LlmModelUpdate;
 
