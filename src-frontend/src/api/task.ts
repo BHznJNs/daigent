@@ -42,22 +42,15 @@ export async function deleteTask(taskId: number): Promise<void> {
   });
 }
 
-type TaskSseCallbacks = {
-  onMessageStart?: () => void;
-  onMessageEnd?: () => void;
-  onMessageChunk?: (chunk: AssistantMessageChunkData) => void;
-  onToolResult?: (toolResult: { tool_call_id: string; result: string }) => void;
-  onError?: (error: Error) => void;
-  onClose?: () => void;
-};
-type TaskSentinel =
-  | "MESSAGE_START"
-  | "MESSAGE_END"
-  | "TOOL_RESULT"
-  | "INTERRUPTED"
-  | "DONE";
-type SseEvent = "ASSISTANT_CHUNK" | TaskSentinel | "ERROR";
-type AssistantMessageChunkData =
+// ============================================
+// Agent Event Types (对应后端 AgentEvent)
+// ============================================
+
+/**
+ * Message chunk event data - 消息块事件数据
+ * 对应后端：MessageChunkEvent
+ */
+export type MessageChunkEventData =
   | {
       type: "text";
       content: string;
@@ -67,19 +60,90 @@ type AssistantMessageChunkData =
       data: ToolCallChunk;
     };
 
-export function resumeTask(
-  taskId: number,
-  messages: (ToolMessage | UserMessage)[] | null,
+/**
+ * Tool executed event data - 工具执行结果事件数据
+ * 对应后端：ToolExecutedEvent
+ */
+export type ToolExecutedEventData = {
+  tool_call_id: string;
+  result: string | null;
+};
+
+/**
+ * Tool require user response event data - 工具需要用户响应事件数据
+ * 对应后端：ToolRequireUserResponseEvent
+ */
+export type ToolRequireUserResponseEventData = {
+  tool_name: "ask_user" | "finish_task";
+};
+
+/**
+ * Tool require permission event data - 工具需要权限确认事件数据
+ * 对应后端：ToolRequirePermissionEvent
+ */
+export type ToolRequirePermissionEventData = {
+  tool_call_id: string;
+};
+
+/**
+ * Error event data - 错误事件数据
+ * 对应后端：ErrorEvent
+ */
+export type ErrorEventData = {
+  message: string;
+};
+
+/**
+ * SSE Event Types - 所有可能的 SSE 事件类型
+ * 对应后端 agent_stream 函数中的所有事件
+ */
+export type AgentEventType =
+  | "MESSAGE_CHUNK"              // MessageChunkEvent - 消息块（文本或工具调用）
+  | "MESSAGE_START"              // MessageStartEvent - 消息开始
+  | "MESSAGE_END"                // MessageEndEvent - 消息结束
+  | "TASK_DONE"                  // TaskDoneEvent - 任务完成
+  | "TASK_INTERRUPTED"           // TaskInterruptedEvent - 任务中断
+  | "TOOL_EXECUTED"              // ToolExecutedEvent - 工具执行完成
+  | "TOOL_REQUIRE_USER_RESPONSE" // ToolRequireUserResponseEvent - 工具需要用户响应
+  | "TOOL_REQUIRE_PERMISSION"    // ToolRequirePermissionEvent - 工具需要权限确认
+  | "ERROR";                     // ErrorEvent - 错误事件
+
+/**
+ * Task SSE Callbacks - 任务 SSE 事件回调接口
+ */
+export type TaskSseCallbacks = {
+  // 消息相关回调
+  onMessageStart?: () => void;
+  onMessageEnd?: () => void;
+  onMessageChunk?: (chunk: MessageChunkEventData) => void;
+  
+  // 工具相关回调
+  onToolExecuted?: (data: ToolExecutedEventData) => void;
+  onToolRequireUserResponse?: (data: ToolRequireUserResponseEventData) => void;
+  onToolRequirePermission?: (data: ToolRequirePermissionEventData) => void;
+  
+  // 任务状态回调
+  onTaskDone?: () => void;
+  onTaskInterrupted?: () => void;
+  
+  // 错误和关闭回调
+  onError?: (error: Error) => void;
+  onClose?: () => void;
+};
+
+function createTaskSseStream(
+  url: string,
+  body: object,
   callbacks: TaskSseCallbacks
 ): AbortController {
   const abortController = new AbortController();
 
-  fetchEventSource(`${API_BASE}/tasks/resume/${taskId}`, {
+  fetchEventSource(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify(body),
     signal: abortController.signal,
 
     async onopen(response) {
@@ -102,26 +166,47 @@ export function resumeTask(
       try {
         const data = JSON.parse(event.data);
 
-        switch (event.event as SseEvent) {
-          case "ASSISTANT_CHUNK":
-            callbacks.onMessageChunk?.(data as AssistantMessageChunkData);
+        switch (event.event as AgentEventType) {
+          case "MESSAGE_CHUNK":
+            callbacks.onMessageChunk?.(data as MessageChunkEventData);
             break;
-          case "ERROR":
-            callbacks.onError?.(new Error(data.message));
-            break;
-          case "TOOL_RESULT":
-            callbacks.onToolResult?.(data);
-            break;
+            
           case "MESSAGE_START":
             callbacks.onMessageStart?.();
             break;
+            
           case "MESSAGE_END":
             callbacks.onMessageEnd?.();
             break;
-          case "DONE":
+            
+          case "TOOL_EXECUTED":
+            callbacks.onToolExecuted?.(data as ToolExecutedEventData);
+            break;
+            
+          case "TOOL_REQUIRE_USER_RESPONSE":
+            callbacks.onToolRequireUserResponse?.(data as ToolRequireUserResponseEventData);
+            break;
+            
+          case "TOOL_REQUIRE_PERMISSION":
+            callbacks.onToolRequirePermission?.(data as ToolRequirePermissionEventData);
+            break;
+            
+          case "TASK_DONE":
+            callbacks.onTaskDone?.();
             callbacks.onClose?.();
             abortController.abort();
             return;
+            
+          case "TASK_INTERRUPTED":
+            callbacks.onTaskInterrupted?.();
+            callbacks.onClose?.();
+            abortController.abort();
+            return;
+            
+          case "ERROR":
+            callbacks.onError?.(new Error((data as ErrorEventData).message));
+            break;
+            
           default:
             console.warn("Unknown SSE event type:", event.event);
         }
@@ -148,4 +233,29 @@ export function resumeTask(
   });
 
   return abortController;
+}
+
+export function continueTask(
+  taskId: number,
+  message: UserMessage | null,
+  callbacks: TaskSseCallbacks
+): AbortController {
+  return createTaskSseStream(
+    `${API_BASE}/tasks/${taskId}/continue`,
+    { message },
+    callbacks
+  );
+}
+
+export function toolAnswer(
+  taskId: number,
+  toolCallId: string,
+  answer: string,
+  callbacks: TaskSseCallbacks
+): AbortController {
+  return createTaskSseStream(
+    `${API_BASE}/tasks/${taskId}/tool_answer`,
+    { tool_call_id: toolCallId, answer },
+    callbacks
+  );
 }

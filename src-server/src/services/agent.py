@@ -43,7 +43,7 @@ class AgentService(ServiceBase):
         workspace_ids = data.pop("workspace_ids", None)
         new_agent = agent_models.Agent(**data)
 
-        if workspace_ids:
+        if workspace_ids is not None:
             stmt = select(workspace_models.Workspace).where(
                 workspace_models.Workspace.id.in_(workspace_ids))
             workspaces = self._db_session.execute(stmt).scalars().all()

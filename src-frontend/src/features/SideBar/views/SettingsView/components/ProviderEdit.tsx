@@ -21,12 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DEFAULT_PROVIDER,
   PROVIDER_DEFAULT_URLS,
   PROVIDER_TYPE_LABELS,
 } from "@/constants/provider";
 import type {
-  LlmModelCreate,
   LlmProviders,
   ProviderCreate,
   ProviderRead,
@@ -56,9 +54,7 @@ export function ProviderEdit({
     reset,
     formState: { isSubmitting },
     control,
-  } = useForm<ProviderCreate>({
-    defaultValues: DEFAULT_PROVIDER,
-  });
+  } = useForm<ProviderCreate>();
 
   useEffect(() => {
     reset({
@@ -66,16 +62,11 @@ export function ProviderEdit({
       type: provider.type,
       base_url: provider.base_url,
       api_key: provider.api_key,
-      models: provider.models,
+      models: [...provider.models],
     });
-  }, [provider, reset]);
+  }, [provider]);
 
-  const models = useWatch({ control, name: "models" });
   const formValues = useWatch({ control });
-
-  const handleModelsChange = (newModels: LlmModelCreate[]) => {
-    setValue("models", newModels);
-  };
 
   const createProviderMutation = useMutation({
     mutationFn: createProvider,
@@ -130,7 +121,10 @@ export function ProviderEdit({
 
   const onSubmit = (data: ProviderCreate | ProviderUpdate) => {
     if (isEditMode) {
-      updateProviderMutation.mutate({ id: provider.id, data });
+      updateProviderMutation.mutate({
+        id: provider.id,
+        data,
+      });
     } else {
       createProviderMutation.mutate(data);
     }
@@ -271,10 +265,17 @@ export function ProviderEdit({
           )}
         />
 
-        <ModelList
-          models={models || []}
-          onChange={handleModelsChange}
-          provider={formValues as ProviderRead | ProviderCreate}
+        <Controller
+          name="models"
+          control={control}
+          defaultValue={[]}
+          render={({ field }) => (
+            <ModelList
+              models={field.value || []}
+              onConfirm={field.onChange}
+              provider={formValues as ProviderRead | ProviderCreate}
+            />
+          )}
         />
 
         <div className="mt-2 flex justify-end gap-2">

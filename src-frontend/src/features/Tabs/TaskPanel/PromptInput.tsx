@@ -56,8 +56,6 @@ export function PromptInput({
     }
   }, [taskData, currentWorkspace]);
 
-  console.log(taskState);
-
   return (
     <BasePromptInput
       className="rounded-md bg-background"

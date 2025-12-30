@@ -2,25 +2,27 @@ import { current } from "immer";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Updater } from "use-immer";
-import { resumeTask } from "@/api/task";
+import { continueTask, toolAnswer, type TaskSseCallbacks } from "@/api/task";
 import type { ToolCallChunk, ToolMessage, UserMessage } from "@/types/message";
 import type { TaskRead } from "@/types/task";
 
 export type TaskState = "idle" | "waiting" | "running";
 
 export type TaskRunner = {
-  run: (taskId: number, messages: (UserMessage | ToolMessage)[] | null) => void;
+  continue: (taskId: number, messages: UserMessage | null) => void;
+  answerTool: (taskId: number, toolCallId: string, answer: string) => void;
   cancel: () => void;
   handleCustomToolAction: (
     toolMessageId: string,
     event: string,
     data: string
-  ) => ToolMessage | null;
+  ) => void;
   state: TaskState;
 };
 
 export function useTaskRunner(
-  setTaskData: Updater<TaskRead | null>
+  setTaskData: Updater<TaskRead | null>,
+  onError?: (error: Error) => void
 ): TaskRunner {
   const [state, setState] = useState<TaskState>("idle");
   const abortController = useRef<AbortController | null>(null);
@@ -34,56 +36,7 @@ export function useTaskRunner(
       }
     >()
   );
-
-  const accumulateText = (text: string) => {
-    setTaskData((draft) => {
-      if (!draft) {
-        return;
-      }
-      const lastMessage = draft.messages.at(-1);
-      if (lastMessage?.role === "assistant") {
-        lastMessage.content += text;
-        return;
-      }
-      draft.messages.push({
-        role: "assistant",
-        content: text,
-        reasoning_content: null,
-        tool_calls: null,
-        audio: null,
-        images: null,
-      });
-    });
-  };
-
-  const accumulateToolCall = (toolCallChunk: ToolCallChunk) => {
-    const existing = toolCallsBuffer.current.get(toolCallChunk.index);
-
-    if (existing) {
-      existing.arguments += toolCallChunk.arguments;
-      if (toolCallChunk.id) {
-        existing.id = toolCallChunk.id;
-      }
-      if (toolCallChunk.name) {
-        existing.name = toolCallChunk.name;
-      }
-    } else {
-      toolCallsBuffer.current.set(toolCallChunk.index, {
-        id: toolCallChunk.id ?? "",
-        name: toolCallChunk.name ?? "",
-        arguments: toolCallChunk.arguments,
-      });
-    }
-  };
-
-  const run = (
-    taskId: number,
-    messages: (UserMessage | ToolMessage)[] | null
-  ) => {
-    setState("waiting");
-    abortController.current?.abort();
-
-    abortController.current = resumeTask(taskId, messages, {
+  const sseCallbacks = useRef<TaskSseCallbacks>({
       onMessageStart: () => {
         setState("running");
         toolCallsBuffer.current.clear();
@@ -134,7 +87,7 @@ export function useTaskRunner(
           toolCallsBuffer.current.clear();
         });
       },
-      onToolResult: (toolResult) => {
+      onToolExecuted: (toolResult) => {
         setTaskData((draft) => {
           if (!draft) {
             return;
@@ -154,14 +107,74 @@ export function useTaskRunner(
           description: error.message || "任务失败，请稍后重试。",
         });
         abortController.current = null;
+        onError?.(error);
         setState("idle");
       },
       onClose: () => {
         abortController.current = null;
-        console.log("Task closed");
         setState("idle");
       },
+    }
+  );
+
+  const accumulateText = (text: string) => {
+    setTaskData((draft) => {
+      if (!draft) {
+        return;
+      }
+      const lastMessage = draft.messages.at(-1);
+      if (lastMessage?.role === "assistant") {
+        lastMessage.content += text;
+        return;
+      }
+      draft.messages.push({
+        role: "assistant",
+        content: text,
+        reasoning_content: null,
+        tool_calls: null,
+        audio: null,
+        images: null,
+      });
     });
+  };
+
+  const accumulateToolCall = (toolCallChunk: ToolCallChunk) => {
+    const existing = toolCallsBuffer.current.get(toolCallChunk.index);
+
+    if (existing) {
+      existing.arguments += toolCallChunk.arguments;
+      if (toolCallChunk.id) {
+        existing.id = toolCallChunk.id;
+      }
+      if (toolCallChunk.name) {
+        existing.name = toolCallChunk.name;
+      }
+    } else {
+      toolCallsBuffer.current.set(toolCallChunk.index, {
+        id: toolCallChunk.id ?? "",
+        name: toolCallChunk.name ?? "",
+        arguments: toolCallChunk.arguments,
+      });
+    }
+  };
+
+  const continue_ = (
+    taskId: number,
+    messages: UserMessage | null
+  ) => {
+    setState("waiting");
+    abortController.current?.abort();
+    abortController.current = continueTask(taskId, messages, sseCallbacks.current);
+  };
+
+  const answerTool = (
+    taskId: number,
+    toolCallId: string,
+    answer: string
+  ) => {
+    setState("waiting");
+    abortController.current?.abort();
+    abortController.current = toolAnswer(taskId, toolCallId, answer, sseCallbacks.current);
   };
 
   const handleCustomToolAction = (
@@ -197,7 +210,8 @@ export function useTaskRunner(
   useEffect(() => cancel, []);
 
   return {
-    run,
+    continue: continue_,
+    answerTool,
     cancel,
     handleCustomToolAction,
     state,

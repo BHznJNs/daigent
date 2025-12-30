@@ -1,6 +1,6 @@
 import type { ToolMessage as ToolMessageType } from "@/types/message";
 import { AskUserToolMessage } from "./AskUserToolMessage";
-import { AttemptCompletionToolMessage } from "./AttemptCompletionToolMessage";
+import { FinishTaskToolMessage } from "./FinishTaskToolMessage";
 import { GeneralToolMessage } from "./GeneralToolMessage";
 
 type ToolMessageProps = {
@@ -21,9 +21,9 @@ export function ToolMessage({ message, onCustomToolAction }: ToolMessageProps) {
       />
     );
   }
-  if (message.name === "attempt_completion") {
+  if (message.name === "finish_task") {
     return (
-      <AttemptCompletionToolMessage
+      <FinishTaskToolMessage
         message={message}
         onCustomToolAction={onCustomToolAction}
       />

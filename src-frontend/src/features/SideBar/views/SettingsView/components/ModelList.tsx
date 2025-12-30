@@ -1,5 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
 import { Download, Edit2, Trash2 } from "lucide-react";
 import { Activity } from "react";
+import { fetchProviderModels } from "@/api/llm";
+import { MultiSelectDialog } from "@/components/custom/dialog/MultiSelectDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,13 +21,12 @@ import type {
   ProviderRead,
 } from "@/types/provider";
 import { ModelEditDialog } from "../dialogs/ModelEditDialog";
-import { ModelSelectDialog } from "../dialogs/ModelSelectDialog";
 
 type LlmModel = LlmModelCreate | LlmModelUpdate;
 
 type ModelListProps = {
   models: LlmModel[];
-  onChange: (models: LlmModel[]) => void;
+  onConfirm: (models: LlmModel[]) => void;
   provider: ProviderRead | ProviderCreate;
 };
 
@@ -81,23 +83,47 @@ function ModelItem({ model, index, onDelete, onEditConfirm }: ModelItemProps) {
   );
 }
 
-export function ModelList({ models, onChange, provider }: ModelListProps) {
-  const handleModelSelection = (selectedModels: string[]) => {
-    const modelsToAdd: LlmModelCreate[] = selectedModels.map((modelId) => ({
-      name: modelId,
-      context_size: 128_000,
-      capability: {
-        vision: false,
-        reasoning: false,
-        tool_use: false,
-      },
-    }));
-    onChange(modelsToAdd);
+export function ModelList({ models, onConfirm, provider }: ModelListProps) {
+  const { data: availableModels, isLoading } = useQuery({
+    queryKey: [
+      "provider-models",
+      provider.name,
+      provider.base_url,
+      provider.api_key,
+    ],
+    queryFn: () =>
+      fetchProviderModels(provider.type, provider.base_url, provider.api_key),
+  });
+
+  const existingModels = models.map((model) => model.name);
+
+  const handleConfirm = (selectedModelIds: string[]) => {
+    const selectedModelIdSet = new Set(selectedModelIds);
+    const result: LlmModel[] = [];
+    // merge selected models with the existing models
+    for (const model of models) {
+      if (selectedModelIdSet.has(model.name)) {
+        result.push(model);
+      }
+      selectedModelIdSet.delete(model.name);
+    }
+    for (const model of selectedModelIdSet) {
+      result.push({
+        name: model,
+        context_size: 128_000,
+        capability: {
+          vision: false,
+          reasoning: false,
+          tool_use: false,
+        },
+      });
+    }
+    onConfirm(result);
   };
 
   const handleDelete = (index: number) => {
     const newModels = models.filter((_, i) => i !== index);
-    onChange(newModels);
+    onConfirm(newModels);
   };
 
   const handleEditConfirm = (index: number) => (model: LlmModelBase) => {
@@ -106,23 +132,25 @@ export function ModelList({ models, onChange, provider }: ModelListProps) {
       const isMatch = m.name === originalModel.name;
       return isMatch ? model : m;
     });
-    onChange(updatedModels);
+    onConfirm(updatedModels);
   };
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex justify-between">
         <Label>模型列表</Label>
-        <ModelSelectDialog
-          provider={provider}
-          existingModels={models.map((model) => model.name)}
-          onConfirm={handleModelSelection}
+        <MultiSelectDialog
+          values={existingModels}
+          selections={availableModels ?? []}
+          onConfirm={handleConfirm}
+          placeholder="搜索模型..."
+          emptyText={isLoading ? "加载中..." : "未找到模型"}
         >
           <Button type="button" variant="outline" size="sm">
             <Download className="mr-1 h-4 w-4" />
             获取模型
           </Button>
-        </ModelSelectDialog>
+        </MultiSelectDialog>
       </div>
       <div className="space-y-2">
         {models.map((model, index) => (

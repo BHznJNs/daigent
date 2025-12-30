@@ -12,7 +12,7 @@ class AgentContext:
         self._retrieve(workspace_id, agent_id)
         self._system_instruction = BASE_INSTRUCTION.format(
             os_platform=platform.system(),
-            user_language="zh-CN",
+            user_language="zh-CN", # TODO: Get from system settings
             user_custom_instruction=self.agent.system_prompt
         )
 

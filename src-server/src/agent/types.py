@@ -1,26 +1,66 @@
-from enum import Enum
-from typing import Any, Literal, TypedDict
+from dataclasses import dataclass, field
+from typing import Literal
 from liteai_sdk import MessageChunk
 
-class AgentTaskSentinel(str, Enum):
-    Done = "DONE"                   # data: None
-    Interrupted  = "INTERRUPTED"    # data: None
-    MessageStart = "MESSAGE_START"  # data: None
-    MessageEnd   = "MESSAGE_END"    # data: None
-    ToolResult   = "TOOL_RESULT"    # data: ToolResult
+@dataclass(frozen=True)
+class MessageChunkEvent:
+    """Message chunk event"""
+    chunk: MessageChunk
+    event_id: Literal["MESSAGE_CHUNK"] = "MESSAGE_CHUNK"
 
-AgentTaskChunk = MessageChunk | tuple[AgentTaskSentinel, Any] | Exception
+@dataclass(frozen=True)
+class MessageStartEvent:
+    """Message start event"""
+    event_id: Literal["MESSAGE_START"] = "MESSAGE_START"
 
-# --- --- --- --- --- ---
+@dataclass(frozen=True)
+class MessageEndEvent:
+    """Message end event"""
+    event_id: Literal["MESSAGE_END"] = "MESSAGE_END"
 
-class ToolResult(TypedDict):
+@dataclass(frozen=True)
+class TaskDoneEvent:
+    """Task done event"""
+    event_id: Literal["TASK_DONE"] = "TASK_DONE"
+
+@dataclass(frozen=True)
+class TaskInterruptedEvent:
+    """Task interrupted event"""
+    event_id: Literal["TASK_INTERRUPTED"] = "TASK_INTERRUPTED"
+
+@dataclass(frozen=True)
+class ToolExecutedEvent:
+    """Tool execution result event"""
     tool_call_id: str
     result: str | None
+    event_id: Literal["TOOL_EXECUTED"] = "TOOL_EXECUTED"
 
-class HumanInTheLoop_ToolCall:
+@dataclass(frozen=True)
+class ToolRequireUserResponseEvent:
+    """Event for tools that require user response"""
     tool_name: Literal["ask_user", "finish_task"]
+    event_id: Literal["TOOL_REQUIRE_USER_RESPONSE"] = "TOOL_REQUIRE_USER_RESPONSE"
 
-class RequireUserPermission(TypedDict):
+@dataclass(frozen=True)
+class ToolRequirePermissionEvent:
+    """Event for tools that require user permission"""
     tool_call_id: str
+    event_id: Literal["TOOL_REQUIRE_PERMISSION"] = "TOOL_REQUIRE_PERMISSION"
 
-ToolCallSentinel = ToolResult | RequireUserPermission | HumanInTheLoop_ToolCall
+@dataclass(frozen=True)
+class ErrorEvent:
+    """Error event"""
+    error: Exception
+    event_id: Literal["ERROR"] = "ERROR"
+
+AgentEvent = (
+    MessageChunkEvent |
+    MessageStartEvent |
+    MessageEndEvent |
+    TaskDoneEvent |
+    TaskInterruptedEvent |
+    ToolExecutedEvent |
+    ToolRequireUserResponseEvent |
+    ToolRequirePermissionEvent |
+    ErrorEvent
+)

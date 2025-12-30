@@ -1,13 +1,18 @@
 from collections.abc import Generator
 from dataclasses import asdict
-from typing import cast
 from loguru import logger
 from flask import Blueprint, Response, jsonify, stream_with_context
 from liteai_sdk import TextChunk, ToolCallChunk, UserMessage
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 from flask_pydantic import validate
 from .types import FlaskResponse, PaginatedResponse
-from ..agent import AgentTask, AgentTaskPool, AgentTaskSentinel
+from ..agent import AgentTask, AgentTaskPool
+from ..agent.types import (
+    MessageChunkEvent, MessageStartEvent, MessageEndEvent,
+    TaskDoneEvent, TaskInterruptedEvent,
+    ToolExecutedEvent, ToolRequireUserResponseEvent,
+    ToolRequirePermissionEvent, ErrorEvent
+)
 from ..services.task import TaskService
 from ..db.schemas import task as task_schemas
 from ..db.models import task as task_models
@@ -21,12 +26,6 @@ class TasksQueryModel(BaseModel):
     workspace_id: int
     page: int = 1
     per_page: int = 15
-
-class ContinueTaskBody(BaseModel):
-    message: dict | None = None
-
-class ResumeTaskBody(BaseModel):
-    messages: list[dict] | None = None
 
 @tasks_bp.route("/", methods=["GET"])
 @validate()
@@ -81,34 +80,75 @@ def delete_task(task_id: int) -> FlaskResponse:
 # -- Streaming Routes ---
 # --- --- --- --- --- ---
 
+class ContinueTaskBody(BaseModel):
+    message: UserMessage | None = None
+
+class ToolAnswerBody(BaseModel):
+    tool_call_id: str
+    answer: str
+
 def agent_stream(async_task_id: int, agent_task: AgentTask) -> Generator[str]:
+    """
+    Process agent event stream and convert to SSE format
+    """
     try:
-        for chunk in agent_task.run():
-            match chunk:
-                case TextChunk() as text_chunk:
-                    yield format_sse(event="ASSISTANT_CHUNK", data={
-                        "type": "text",
-                        "content": text_chunk.content,
+        for event in agent_task.run():
+            match event:
+                case MessageChunkEvent(chunk):
+                    match chunk:
+                        case TextChunk(content=content):
+                            yield format_sse(event=event.event_id, data={
+                                "type": "text",
+                                "content": content,
+                            })
+                        case ToolCallChunk():
+                            yield format_sse(event=event.event_id, data={
+                                "type": "tool_call",
+                                "data": asdict(chunk),
+                            })
+
+                case MessageStartEvent():
+                    yield format_sse(event=event.event_id, data=None)
+
+                case MessageEndEvent():
+                    yield format_sse(event=event.event_id, data=None)
+
+                case TaskDoneEvent():
+                    yield format_sse(event=event.event_id, data=None)
+
+                case TaskInterruptedEvent():
+                    yield format_sse(event=event.event_id, data=None)
+
+                case ToolExecutedEvent(tool_call_id=tool_call_id, result=result):
+                    yield format_sse(event=event.event_id, data={
+                        "tool_call_id": tool_call_id,
+                        "result": result,
                     })
-                case ToolCallChunk() as tool_call:
-                    yield format_sse(event="ASSISTANT_CHUNK", data={
-                        "type": "tool_call",
-                        "data": asdict(tool_call),
+
+                case ToolRequireUserResponseEvent(tool_name=tool_name):
+                    yield format_sse(event=event.event_id, data={
+                        "tool_name": tool_name,
                     })
-                case (AgentTaskSentinel() as sentinel, data):
-                    yield format_sse(event=sentinel.value, data=data)
-                case Exception():
-                    _logger.exception("Task failed: {}", chunk)
-                    _logger.debug("Task openai messages: {}", [m.to_litellm_message() for m in agent_task._messages])
-                    yield format_sse(event="ERROR", data={"message": str(chunk)})
+
+                case ToolRequirePermissionEvent(tool_call_id=tool_call_id):
+                    yield format_sse(event=event.event_id, data={
+                        "tool_call_id": tool_call_id,
+                    })
+
+                case ErrorEvent(error=error):
+                    _logger.exception("Task failed: {}", error)
+                    _logger.debug("Task openai messages: {}",
+                                [m.to_litellm_message() for m in agent_task._messages])
+                    yield format_sse(event=event.event_id, data={"message": str(error)})
                     break
+
         task_pool.remove(async_task_id)
     except GeneratorExit:
-        # when the client disconnects
+        # When client disconnects
         task_pool.stop(async_task_id)
         return
 
-@tasks_bp.route("/continue/<int:task_id>", methods=["POST"])
+@tasks_bp.route("/<int:task_id>/continue", methods=["POST"])
 @validate()
 def continue_task(task_id: int, body: ContinueTaskBody) -> FlaskResponse:
     """
@@ -118,39 +158,28 @@ def continue_task(task_id: int, body: ContinueTaskBody) -> FlaskResponse:
     task = task_pool.add(task_id)
 
     if body.message is not None:
-        try:
-            message_obj = UserMessage.model_validate(body.message)
-        except ValidationError as e:
-            _logger.error("Failed to validate message: {}", e)
-            return jsonify({"error": e.errors()}), 400
-        task.append_message(message_obj)
+        task.append_message(body.message)
 
     return Response(stream_with_context(agent_stream(task_id, task)),
                     mimetype="text/event-stream")
 
-@tasks_bp.route("/tool_answer/<int:task_id>", methods=["POST"])
-def tool_answer(task_id: int) -> FlaskResponse:
+@tasks_bp.route("/<int:task_id>/tool_answer", methods=["POST"])
+@validate()
+def tool_answer(task_id: int, body: ToolAnswerBody) -> FlaskResponse:
     """
     This endpoint is used for the HumanInTheLoop tool calls.
     The frontend should send the tool call id and the answer to this endpoint.
     """
     task = task_pool.add(task_id)
-    # TODO: Implement tool_answer logic
-    return jsonify({"message": "Not implemented yet"}), 501
-
-@tasks_bp.route("/resume/<int:task_id>", methods=["POST"])
-@validate()
-def resume_task(task_id: int, body: ResumeTaskBody) -> FlaskResponse:
-    task = task_pool.add(task_id)
-
-    if body.messages:
-        for message in body.messages:
-            try:
-                message_obj = task_models.message_adapter.validate_python(message)
-            except ValidationError as e:
-                _logger.error("Failed to validate message: {}", e)
-                return jsonify({"error": e.errors()}), 400
-            task.append_message(message_obj)
-
+    task.set_tool_call_result(body.tool_call_id, body.answer)
     return Response(stream_with_context(agent_stream(task_id, task)),
                     mimetype="text/event-stream")
+
+@tasks_bp.route("/<int:task_id>/tool_reviews", methods=["POST"])
+@validate()
+def tool_reviews(task_id: int) -> FlaskResponse:
+    """
+    This endpoint is used to submit the tool call permissions.
+    """
+    # TODO: Implement tool_reviews logic
+    ...

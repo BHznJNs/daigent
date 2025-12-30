@@ -1,11 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { current } from "immer";
 import { Activity, useEffect, useState } from "react";
 import { useImmer } from "use-immer";
 import { createTask, fetchTaskById } from "@/api/task";
 import { useTabsStore } from "@/stores/tabs-store";
 import { useWorkspaceStore } from "@/stores/workspace-store";
-import type { ToolMessage, UserMessage } from "@/types/message";
+import type { UserMessage } from "@/types/message";
 import type { Tab } from "@/types/tab";
 import type { TaskRead } from "@/types/task";
 import { ContinueTask } from "./ContinueTask";
@@ -22,7 +21,9 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
   const { updateTab } = useTabsStore();
   const [taskData, setTaskData] = useImmer<TaskRead | null>(null);
   const [showContinueTask, setShowContinueTask] = useState(false);
-  const taskRunner = useTaskRunner(setTaskData);
+  const taskRunner = useTaskRunner(setTaskData, (_err) => {
+    setShowContinueTask(true);
+  });
 
   const queryClient = useQueryClient();
   const { data: taskQueryData, isLoading: taskLoading } = useQuery({
@@ -65,8 +66,13 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
     setTaskData(taskQueryData);
     if (!(tabData.metadata.isDraft || taskRunner.state !== "idle")) {
       const lastMessage = taskQueryData.messages.at(-1);
-      if (lastMessage?.role === "user") {
-        setShowContinueTask(true);
+      if (lastMessage) {
+        const isAssistantMessage = lastMessage.role === "assistant";
+        const isFinishTaskTool =
+          lastMessage.role === "tool" && lastMessage.name === "finish_task";
+        if (!(isAssistantMessage || isFinishTaskTool)) {
+          setShowContinueTask(true);
+        }
       }
     }
   }, [taskQueryData]);
@@ -89,25 +95,9 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
         workspace_id: currentWorkspace.id,
         messages: [userMessage],
       });
-      taskRunner.run(newTask.id, null);
+      taskRunner.continue(newTask.id, null);
     } else {
-      let toolMessage: ToolMessage | null = null;
-      setTaskData((draft) => {
-        if (!draft) {
-          return;
-        }
-        const lastMessage = draft.messages.at(-1);
-        if (lastMessage?.role === "tool") {
-          lastMessage.result = "[System Message] User ignored this tool call.";
-          toolMessage = current(lastMessage);
-        }
-        draft.messages.push(userMessage);
-      });
-      setShowContinueTask(false);
-      const appendedMessages = toolMessage
-        ? [toolMessage, userMessage]
-        : [userMessage];
-      taskRunner.run(tabData.metadata.taskId, appendedMessages);
+      taskRunner.continue(tabData.metadata.taskId, userMessage);
     }
   };
 
@@ -116,7 +106,7 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
       return;
     }
     setShowContinueTask(false);
-    taskRunner.run(tabData.metadata.taskId, null);
+    taskRunner.continue(tabData.metadata.taskId, null);
   };
 
   const handleCustomToolAction = (
@@ -125,15 +115,13 @@ export function TaskPanel({ tabData }: TaskPanelProps) {
     if (tabData.metadata.isDraft) {
       return;
     }
-    const changedToolMessage = taskRunner.handleCustomToolAction(...args);
-    taskRunner.run(
-      tabData.metadata.taskId,
-      changedToolMessage ? [changedToolMessage] : null
-    );
+    taskRunner.handleCustomToolAction(...args);
+    const [toolMessageId, _, data] = args;
+    taskRunner.answerTool(tabData.metadata.taskId, toolMessageId, data);
   };
 
   return (
-    <div className="flex h-full flex-col p-4">
+    <div className="flex h-full flex-col p-4 pt-0">
       <TaskConversation
         messages={taskData?.messages ?? null}
         isLoading={taskLoading}
