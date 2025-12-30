@@ -24,6 +24,11 @@ export type WorkspaceTabMetadata =
   | { mode: "create" }
   | { mode: "edit"; id: number };
 
+export type ProviderTabMetadata =
+  | { mode: "create" }
+  | { mode: "edit"; id: number };
+
 export type Tab =
   | SpecificTab<"task", TaskTabMetadata>
-  | SpecificTab<"workspace", WorkspaceTabMetadata>;
+  | SpecificTab<"workspace", WorkspaceTabMetadata>
+  | SpecificTab<"provider", ProviderTabMetadata>;

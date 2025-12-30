@@ -9,6 +9,10 @@ export async function fetchProviders(): Promise<ProviderRead[]> {
   return await fetchApi<ProviderRead[]>(`${API_BASE}/providers`);
 }
 
+export async function fetchProviderById(id: number): Promise<ProviderRead> {
+  return await fetchApi<ProviderRead>(`${API_BASE}/providers/${id}`);
+}
+
 export async function createProvider(
   providerData: ProviderCreate
 ): Promise<ProviderRead> {

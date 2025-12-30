@@ -1,13 +1,14 @@
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { FailedToLoad } from "@/components/FailedToLoad";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DEFAULT_PROVIDER } from "@/constants/provider";
-import { ProviderEdit } from "./components/ProviderEdit";
-import { ProviderList } from "./components/ProviderList";
+import { tabIdFactory } from "@/lib/tab";
+import { useTabsStore } from "@/stores/tabs-store";
+import type { Tab } from "@/types/tab";
+import { ProviderList } from "./ProviderList";
 
 function ProviderListSkeleton() {
   return (
@@ -31,8 +32,23 @@ function ProviderListSkeleton() {
   );
 }
 
+function createProviderCreateTab(): Tab {
+  return {
+    id: tabIdFactory(),
+    type: "provider",
+    title: "添加服务提供商",
+    icon: "plug-zap",
+    metadata: { mode: "create" },
+  };
+}
+
 export function ProviderSettings() {
-  const [showAddForm, setShowAddForm] = useState(false);
+  const { addTab } = useTabsStore();
+
+  const handleAddProvider = () => {
+    const newTab = createProviderCreateTab();
+    addTab(newTab);
+  };
 
   return (
     <div className="flex flex-col">
@@ -48,34 +64,21 @@ export function ProviderSettings() {
             )}
           >
             <Suspense fallback={<ProviderListSkeleton />}>
-              <ProviderList showAddForm={showAddForm} />
+              <ProviderList />
             </Suspense>
           </ErrorBoundary>
         )}
       </QueryErrorResetBoundary>
 
-      <div>
-        {showAddForm ? (
-          <div className="p-4">
-            <h3 className="mb-3 font-medium text-sm">添加服务提供商</h3>
-            <ProviderEdit
-              provider={DEFAULT_PROVIDER}
-              onSuccess={() => setShowAddForm(false)}
-              onCancel={() => setShowAddForm(false)}
-            />
-          </div>
-        ) : (
-          <div className="w-full p-4">
-            <Button
-              variant="secondary"
-              className="w-full"
-              onClick={() => setShowAddForm(true)}
-            >
-              <PlusIcon className="h-4 w-4" />
-              添加
-            </Button>
-          </div>
-        )}
+      <div className="w-full p-4">
+        <Button
+          variant="secondary"
+          className="w-full"
+          onClick={handleAddProvider}
+        >
+          <PlusIcon className="h-4 w-4" />
+          添加
+        </Button>
       </div>
     </div>
   );

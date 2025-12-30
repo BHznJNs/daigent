@@ -1,17 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Activity, useEffect } from "react";
+import { useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { createProvider, deleteProvider, updateProvider } from "@/api/provider";
-import { ConfirmDeleteDialog } from "@/components/custom/dialog/ConfirmDeteteDialog";
+import { createProvider, updateProvider } from "@/api/provider";
+import { FieldItem } from "@/components/custom/item/FieldItem";
 import { PasswordInput } from "@/components/Password";
 import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -24,27 +19,22 @@ import {
   PROVIDER_DEFAULT_URLS,
   PROVIDER_TYPE_LABELS,
 } from "@/constants/provider";
+import { ModelList } from "@/features/Tabs/ProviderPanel/ModelList";
 import type {
   LlmProviders,
   ProviderCreate,
   ProviderRead,
   ProviderUpdate,
 } from "@/types/provider";
-import { ModelList } from "./ModelList";
 
 const URL_REGEX = /^(https?:\/\/)([^\s/$.?#].[^\s]*)$/;
 
 type ProviderEditProps = {
   provider: ProviderRead | ProviderCreate;
-  onSuccess?: () => void;
-  onCancel?: () => void;
+  onConfirm?: () => void;
 };
 
-export function ProviderEdit({
-  provider,
-  onSuccess,
-  onCancel,
-}: ProviderEditProps) {
+export function ProviderEdit({ provider, onConfirm }: ProviderEditProps) {
   const isEditMode = "id" in provider;
   const queryClient = useQueryClient();
 
@@ -64,7 +54,7 @@ export function ProviderEdit({
       api_key: provider.api_key,
       models: [...provider.models],
     });
-  }, [provider]);
+  }, [provider, reset]);
 
   const formValues = useWatch({ control });
 
@@ -76,7 +66,7 @@ export function ProviderEdit({
         description: `已成功创建 ${newProvider.name} 服务提供商。`,
       });
       reset();
-      onSuccess?.();
+      onConfirm?.();
     },
     onError: (error: Error) => {
       toast.error("创建失败", {
@@ -90,31 +80,18 @@ export function ProviderEdit({
       updateProvider(id, data),
     onSuccess: (updatedProvider) => {
       queryClient.invalidateQueries({ queryKey: ["providers"] });
+      queryClient.invalidateQueries({
+        queryKey: ["provider", updatedProvider.id],
+      });
       toast.success("更新成功", {
         description: `已成功更新 ${updatedProvider.name} 服务提供商。`,
       });
       reset();
-      onSuccess?.();
+      onConfirm?.();
     },
     onError: (error: Error) => {
       toast.error("更新失败", {
         description: error.message || "更新 provider 时发生错误，请稍后重试。",
-      });
-    },
-  });
-
-  const deleteProviderMutation = useMutation({
-    mutationFn: deleteProvider,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["providers"] });
-      toast.success("删除成功", {
-        description: "已成功删除服务提供商。",
-      });
-      onSuccess?.();
-    },
-    onError: (error: Error) => {
-      toast.error("删除失败", {
-        description: error.message || "删除 provider 时发生错误，请稍后重试。",
       });
     },
   });
@@ -145,20 +122,9 @@ export function ProviderEdit({
     }
   };
 
-  const handleConfirmDelete = () => {
-    if ("id" in provider) {
-      deleteProviderMutation.mutate(provider.id);
-    }
-  };
-
-  const handleCancel = () => {
-    reset();
-    onCancel?.();
-  };
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <FieldGroup>
+    <form onSubmit={handleSubmit(onSubmit)} className="h-full py-4">
+      <FieldGroup className="h-full gap-y-2">
         <Controller
           name="name"
           control={control}
@@ -174,16 +140,9 @@ export function ProviderEdit({
             },
           }}
           render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="provider-name">名称</FieldLabel>
-              <Input
-                {...field}
-                id="provider-name"
-                aria-invalid={fieldState.invalid}
-                placeholder="提供商名称"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
+            <FieldItem title="名称" fieldState={fieldState}>
+              <Input {...field} placeholder="提供商名称" />
+            </FieldItem>
           )}
         />
 
@@ -192,13 +151,9 @@ export function ProviderEdit({
           control={control}
           rules={{ required: "请选择提供商类型" }}
           render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="provider-type">类型</FieldLabel>
+            <FieldItem title="类型" fieldState={fieldState}>
               <Select value={field.value} onValueChange={handleTypeChange}>
-                <SelectTrigger
-                  id="provider-type"
-                  aria-invalid={fieldState.invalid}
-                >
+                <SelectTrigger>
                   <SelectValue placeholder="选择提供商类型" />
                 </SelectTrigger>
                 <SelectContent>
@@ -211,8 +166,7 @@ export function ProviderEdit({
                   )}
                 </SelectContent>
               </Select>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
+            </FieldItem>
           )}
         />
 
@@ -227,17 +181,13 @@ export function ProviderEdit({
             },
           }}
           render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="provider-base-url">API 基础地址</FieldLabel>
+            <FieldItem title="API 基础地址" fieldState={fieldState}>
               <Input
                 {...field}
-                id="provider-base-url"
                 type="url"
-                aria-invalid={fieldState.invalid}
                 placeholder="https://api.example.com/v1"
               />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
+            </FieldItem>
           )}
         />
 
@@ -252,16 +202,9 @@ export function ProviderEdit({
             },
           }}
           render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="provider-api-key">API 密钥</FieldLabel>
-              <PasswordInput
-                {...field}
-                id="provider-api-key"
-                aria-invalid={fieldState.invalid}
-                placeholder="输入 API 密钥"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
+            <FieldItem title="API 密钥" fieldState={fieldState}>
+              <PasswordInput {...field} placeholder="输入 API 密钥" />
+            </FieldItem>
           )}
         />
 
@@ -278,30 +221,7 @@ export function ProviderEdit({
           )}
         />
 
-        <div className="mt-2 flex justify-end gap-2">
-          <Activity mode={isEditMode ? "visible" : "hidden"}>
-            <ConfirmDeleteDialog
-              description={`您确定要删除服务提供商 "${provider.name}" 吗？此操作无法撤销。`}
-              onConfirm={handleConfirmDelete}
-              isDeleting={deleteProviderMutation.isPending}
-            >
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={isSubmitting || deleteProviderMutation.isPending}
-              >
-                {deleteProviderMutation.isPending ? "删除中..." : "删除"}
-              </Button>
-            </ConfirmDeleteDialog>
-          </Activity>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isSubmitting}
-          >
-            取消
-          </Button>
+        <div className="mt-4 flex justify-end">
           <Button type="submit" disabled={isSubmitting}>
             {(() => {
               if (isEditMode) {

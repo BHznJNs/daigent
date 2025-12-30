@@ -16,7 +16,13 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { BotIcon, FolderCogIcon, type LucideIcon, XIcon } from "lucide-react";
+import {
+  BotIcon,
+  FolderCogIcon,
+  type LucideIcon,
+  PlugIcon,
+  XIcon,
+} from "lucide-react";
 import { DynamicIcon } from "lucide-react/dynamic";
 import { useEffect, useRef } from "react";
 import {
@@ -29,13 +35,20 @@ import {
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useTabsStore } from "@/stores/tabs-store";
-import type { Tab, TaskTabMetadata, WorkspaceTabMetadata } from "@/types/tab";
+import type {
+  ProviderTabMetadata,
+  Tab,
+  TaskTabMetadata,
+  WorkspaceTabMetadata,
+} from "@/types/tab";
+import { ProviderPanel } from "./ProviderPanel";
 import { TaskPanel } from "./TaskPanel";
 import { WorkspacePanel } from "./WorkspacePanel";
 
 const tabIconMap: Record<Tab["type"], LucideIcon> = {
   task: BotIcon,
   workspace: FolderCogIcon,
+  provider: PlugIcon,
 };
 
 export type TabPanelProps<Metadata> = {
@@ -120,6 +133,13 @@ function TabPanelRenderer({ tab }: { tab: Tab }) {
         <WorkspacePanel
           tabId={tab.id}
           metadata={tab.metadata as WorkspaceTabMetadata}
+        />
+      );
+    case "provider":
+      return (
+        <ProviderPanel
+          tabId={tab.id}
+          metadata={tab.metadata as ProviderTabMetadata}
         />
       );
     default:
