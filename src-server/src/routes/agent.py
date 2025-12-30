@@ -31,6 +31,15 @@ def get_agents(query: AgentsQueryModel) -> FlaskResponse:
             total_pages=result["total_pages"]
         ))
 
+@agents_bp.route("/brief", methods=["GET"])
+def get_agents_brief() -> FlaskResponse:
+    with AgentService() as service:
+        agents = service.get_agents_brief()
+        return jsonify([agent_schemas.AgentBrief
+                                     .model_validate(agent)
+                                     .model_dump(mode="json")
+                        for agent in agents])
+
 @agents_bp.route("/", methods=["POST"])
 @validate()
 def create_agent(body: agent_schemas.AgentCreate) -> FlaskResponse:

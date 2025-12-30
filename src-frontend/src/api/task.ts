@@ -1,5 +1,5 @@
 import { fetchEventSource } from "@microsoft/fetch-event-source";
-import type { ToolCallChunk, ToolMessage, UserMessage } from "@/types/message";
+import type { ToolCallChunk, UserMessage } from "@/types/message";
 import type { TaskCreate, TaskRead } from "@/types/task";
 import { API_BASE, fetchApi, type PaginatedResponse } from "./index";
 
@@ -98,15 +98,15 @@ export type ErrorEventData = {
  * 对应后端 agent_stream 函数中的所有事件
  */
 export type AgentEventType =
-  | "MESSAGE_CHUNK"              // MessageChunkEvent - 消息块（文本或工具调用）
-  | "MESSAGE_START"              // MessageStartEvent - 消息开始
-  | "MESSAGE_END"                // MessageEndEvent - 消息结束
-  | "TASK_DONE"                  // TaskDoneEvent - 任务完成
-  | "TASK_INTERRUPTED"           // TaskInterruptedEvent - 任务中断
-  | "TOOL_EXECUTED"              // ToolExecutedEvent - 工具执行完成
+  | "MESSAGE_CHUNK" // MessageChunkEvent - 消息块（文本或工具调用）
+  | "MESSAGE_START" // MessageStartEvent - 消息开始
+  | "MESSAGE_END" // MessageEndEvent - 消息结束
+  | "TASK_DONE" // TaskDoneEvent - 任务完成
+  | "TASK_INTERRUPTED" // TaskInterruptedEvent - 任务中断
+  | "TOOL_EXECUTED" // ToolExecutedEvent - 工具执行完成
   | "TOOL_REQUIRE_USER_RESPONSE" // ToolRequireUserResponseEvent - 工具需要用户响应
-  | "TOOL_REQUIRE_PERMISSION"    // ToolRequirePermissionEvent - 工具需要权限确认
-  | "ERROR";                     // ErrorEvent - 错误事件
+  | "TOOL_REQUIRE_PERMISSION" // ToolRequirePermissionEvent - 工具需要权限确认
+  | "ERROR"; // ErrorEvent - 错误事件
 
 /**
  * Task SSE Callbacks - 任务 SSE 事件回调接口
@@ -116,16 +116,16 @@ export type TaskSseCallbacks = {
   onMessageStart?: () => void;
   onMessageEnd?: () => void;
   onMessageChunk?: (chunk: MessageChunkEventData) => void;
-  
+
   // 工具相关回调
   onToolExecuted?: (data: ToolExecutedEventData) => void;
   onToolRequireUserResponse?: (data: ToolRequireUserResponseEventData) => void;
   onToolRequirePermission?: (data: ToolRequirePermissionEventData) => void;
-  
+
   // 任务状态回调
   onTaskDone?: () => void;
   onTaskInterrupted?: () => void;
-  
+
   // 错误和关闭回调
   onError?: (error: Error) => void;
   onClose?: () => void;
@@ -153,8 +153,8 @@ function createTaskSseStream(
 
       let errorMessage: string;
       try {
-        const body = await response.json();
-        errorMessage = body?.error ?? `HTTP_${response.status}`;
+        const responseBody = await response.json();
+        errorMessage = responseBody?.error ?? `HTTP_${response.status}`;
       } catch {
         errorMessage = response.statusText || `HTTP_${response.status}`;
       }
@@ -170,43 +170,47 @@ function createTaskSseStream(
           case "MESSAGE_CHUNK":
             callbacks.onMessageChunk?.(data as MessageChunkEventData);
             break;
-            
+
           case "MESSAGE_START":
             callbacks.onMessageStart?.();
             break;
-            
+
           case "MESSAGE_END":
             callbacks.onMessageEnd?.();
             break;
-            
+
           case "TOOL_EXECUTED":
             callbacks.onToolExecuted?.(data as ToolExecutedEventData);
             break;
-            
+
           case "TOOL_REQUIRE_USER_RESPONSE":
-            callbacks.onToolRequireUserResponse?.(data as ToolRequireUserResponseEventData);
+            callbacks.onToolRequireUserResponse?.(
+              data as ToolRequireUserResponseEventData
+            );
             break;
-            
+
           case "TOOL_REQUIRE_PERMISSION":
-            callbacks.onToolRequirePermission?.(data as ToolRequirePermissionEventData);
+            callbacks.onToolRequirePermission?.(
+              data as ToolRequirePermissionEventData
+            );
             break;
-            
+
           case "TASK_DONE":
             callbacks.onTaskDone?.();
             callbacks.onClose?.();
             abortController.abort();
             return;
-            
+
           case "TASK_INTERRUPTED":
             callbacks.onTaskInterrupted?.();
             callbacks.onClose?.();
             abortController.abort();
             return;
-            
+
           case "ERROR":
             callbacks.onError?.(new Error((data as ErrorEventData).message));
             break;
-            
+
           default:
             console.warn("Unknown SSE event type:", event.event);
         }

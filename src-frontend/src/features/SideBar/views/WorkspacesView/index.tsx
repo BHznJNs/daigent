@@ -1,20 +1,31 @@
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
-import { Activity, Suspense, useState } from "react";
+import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { FailedToLoad } from "@/components/FailedToLoad";
 import { Button } from "@/components/ui/button";
-import { DEFAULT_WORKSPACE } from "@/constants/workspace";
+import { tabIdFactory } from "@/lib/tab";
+import { useTabsStore } from "@/stores/tabs-store";
+import type { Tab } from "@/types/tab";
 import { SideBarHeader } from "../../SideBar";
-import { WorkspaceEdit } from "./components/WorkspaceEdit";
-import { WorkspaceList } from "./components/WorkspaceList";
-import { WorkspaceListSkeleton } from "./components/WorkspaceListSkeleton";
+import { WorkspaceList, WorkspaceListSkeleton } from "./WorkspaceList";
+
+function createWorkspaceCreateTab(): Tab {
+  return {
+    id: tabIdFactory(),
+    type: "workspace",
+    title: "创建工作区",
+    icon: "folder-plus",
+    metadata: { mode: "create" },
+  };
+}
 
 export function WorkspacesView() {
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const { addTab } = useTabsStore();
 
   const handleCreateWorkspace = () => {
-    setShowCreateForm(true);
+    const newTab = createWorkspaceCreateTab();
+    addTab(newTab);
   };
 
   return (
@@ -55,13 +66,6 @@ export function WorkspacesView() {
             </ErrorBoundary>
           )}
         </QueryErrorResetBoundary>
-        <Activity mode={showCreateForm ? "visible" : "hidden"}>
-          <WorkspaceEdit
-            workspace={DEFAULT_WORKSPACE}
-            onConfirm={() => setShowCreateForm(false)}
-            onCancel={() => setShowCreateForm(false)}
-          />
-        </Activity>
       </div>
     </div>
   );

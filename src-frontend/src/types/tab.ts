@@ -1,17 +1,29 @@
+import type { dynamicIconImports } from "lucide-react/dynamic";
 import type { TaskType } from "./task";
 
-export type TaskTabMetadata = { taskType: TaskType } & (
+export type TabBase = {
+  id: string;
+  title: string;
+  icon?: keyof typeof dynamicIconImports;
+};
+
+type SpecificTab<Name extends string, Metadata> = TabBase & {
+  type: Name;
+  metadata: Metadata;
+};
+
+export type TaskTabMetadata = { type: TaskType } & (
   | { isDraft: true }
   | {
+      id: number;
       isDraft: false;
-      taskId: number;
     }
 );
 
-export type Tab = {
-  id: string;
-  title: string;
-} & {
-  type: "task";
-  metadata: TaskTabMetadata;
-};
+export type WorkspaceTabMetadata =
+  | { mode: "create" }
+  | { mode: "edit"; id: number };
+
+export type Tab =
+  | SpecificTab<"task", TaskTabMetadata>
+  | SpecificTab<"workspace", WorkspaceTabMetadata>;

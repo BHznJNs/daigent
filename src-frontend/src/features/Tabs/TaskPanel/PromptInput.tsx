@@ -1,4 +1,5 @@
 import type { ChatStatus } from "ai";
+import { ChevronsUpDownIcon, Loader2Icon } from "lucide-react";
 import { Activity, useEffect, useState } from "react";
 import {
   PromptInput as BasePromptInput,
@@ -9,13 +10,56 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
+import { SingleSelectDialog } from "@/components/custom/dialog/SingleSelectDialog";
 import { Button } from "@/components/ui/button";
 import { ORCHESTRATOR_ID } from "@/constants/agent";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { AgentRead } from "@/types/agent";
 import type { TaskRead, TaskType } from "@/types/task";
-import { AgentSelector } from "./AgentSelector";
 import type { TaskState } from "./use-task-runner";
+
+type AgentSelectDialogProps = {
+  value: AgentRead | null;
+  onValueChange: (agent: AgentRead | null) => void;
+};
+
+function AgentSelectDialog({ value, onValueChange }: AgentSelectDialogProps) {
+  const { currentWorkspace, isLoading } = useWorkspaceStore();
+  const agents = currentWorkspace?.usable_agents ?? [];
+
+  let buttonText = "Select agent";
+  if (isLoading) {
+    buttonText = "Loading...";
+  } else if (value) {
+    buttonText = value.name;
+  }
+
+  return (
+    <SingleSelectDialog
+      value={value ?? undefined}
+      selections={agents}
+      getKey={(agent) => agent.id}
+      getValue={(agent) => agent.name}
+      onSelect={onValueChange}
+      placeholder="Search agent..."
+      emptyText="No agent found."
+    >
+      <Button
+        variant="outline"
+        role="combobox"
+        className="justify-between"
+        disabled={isLoading}
+      >
+        {buttonText}
+        {isLoading ? (
+          <Loader2Icon className="ml-2 size-4 shrink-0 animate-spin" />
+        ) : (
+          <ChevronsUpDownIcon className="ml-2 size-4 shrink-0 opacity-50" />
+        )}
+      </Button>
+    </SingleSelectDialog>
+  );
+}
 
 type PromptInputProps = {
   taskType: TaskType;
@@ -75,14 +119,14 @@ export function PromptInput({
       <PromptInputFooter>
         <PromptInputTools>
           <Activity mode={taskType === "agent" ? "visible" : "hidden"}>
-            <AgentSelector
+            <AgentSelectDialog
               value={selectedAgent}
               onValueChange={setSelectedAgent}
             />
           </Activity>
           <Activity mode={taskType === "orchestration" ? "visible" : "hidden"}>
             <Button variant="outline" disabled>
-              Agent
+              Orchestrator
             </Button>
           </Activity>
         </PromptInputTools>

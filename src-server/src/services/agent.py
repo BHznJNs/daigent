@@ -1,3 +1,4 @@
+from typing import NamedTuple
 from werkzeug.exceptions import HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
@@ -6,6 +7,10 @@ from ..db.models import agent as agent_models
 from ..db.models import workspace as workspace_models
 
 class AgentNotFoundError(HTTPException): pass
+
+class AgentBrief(NamedTuple):
+    id: int
+    name: str
 
 class AgentService(ServiceBase):
     def get_agents(self, page: int = 1, per_page: int = 10) -> dict:
@@ -31,6 +36,11 @@ class AgentService(ServiceBase):
             "per_page": per_page,
             "total_pages": total_pages
         }
+
+    def get_agents_brief(self) -> list[AgentBrief]:
+        stmt = select(agent_models.Agent.id, agent_models.Agent.name)
+        agents = self._db_session.execute(stmt).all()
+        return [AgentBrief(id, name) for id, name in agents]
 
     def get_agent_by_id(self, id: int) -> agent_models.Agent | None:
         return self._db_session.get(

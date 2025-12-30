@@ -16,6 +16,7 @@ import {
   EmptyDescription,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { DEFAULT_TAB_TITLE } from "@/features/Tabs/TaskPanel";
 import { tabIdFactory } from "@/lib/tab";
 import { useTabsStore } from "@/stores/tabs-store";
 import { useWorkspaceStore } from "@/stores/workspace-store";
@@ -30,16 +31,13 @@ export function TasksView() {
   const { currentWorkspace } = useWorkspaceStore();
 
   const handleNewTask = (taskType: TaskType) => {
-    const defaultTitle =
-      taskType === "agent" ? "New agent task" : "New orchestrator task";
-
     addTab({
       id: tabIdFactory(),
-      title: defaultTitle,
+      title: DEFAULT_TAB_TITLE,
       type: "task",
       metadata: {
         isDraft: true,
-        taskType,
+        type: taskType,
       },
     });
   };

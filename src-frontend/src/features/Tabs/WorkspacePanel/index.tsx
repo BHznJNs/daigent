@@ -1,0 +1,87 @@
+import {
+  QueryErrorResetBoundary,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import { fetchWorkspaceById } from "@/api/workspace";
+import { FailedToLoad } from "@/components/FailedToLoad";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { DEFAULT_WORKSPACE } from "@/constants/workspace";
+import { WorkspaceEdit } from "@/features/Tabs/WorkspacePanel/WorkspaceEdit";
+import { useTabsStore } from "@/stores/tabs-store";
+import type { WorkspaceTabMetadata } from "@/types/tab";
+import type { TabPanelProps } from "../index";
+
+function WorkspaceCreatePanel({ tabId }: { tabId: string }) {
+  const { removeTab } = useTabsStore();
+
+  const handleComplete = () => {
+    removeTab(tabId);
+  };
+
+  return (
+    <WorkspaceEdit workspace={DEFAULT_WORKSPACE} onConfirm={handleComplete} />
+  );
+}
+
+function WorkspaceEditPanel({
+  tabId,
+  workspaceId,
+}: {
+  tabId: string;
+  workspaceId: number;
+}) {
+  const { removeTab } = useTabsStore();
+
+  const { data: workspace } = useSuspenseQuery({
+    queryKey: ["workspace", workspaceId],
+    queryFn: async () => await fetchWorkspaceById(workspaceId),
+  });
+
+  const handleComplete = () => {
+    removeTab(tabId);
+  };
+
+  return <WorkspaceEdit workspace={workspace} onConfirm={handleComplete} />;
+}
+
+export function WorkspacePanel({
+  tabId,
+  metadata,
+}: TabPanelProps<WorkspaceTabMetadata>) {
+  if (metadata.mode === "create") {
+    return <WorkspaceCreatePanel tabId={tabId} />;
+  }
+
+  return (
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <ErrorBoundary
+          onReset={reset}
+          fallbackRender={({ resetErrorBoundary }) => (
+            <div className="flex h-full items-center justify-center p-4">
+              <FailedToLoad
+                refetch={resetErrorBoundary}
+                description="无法加载工作区信息，请稍后重试。"
+              />
+            </div>
+          )}
+        >
+          <Suspense
+            fallback={
+              <div className="flex h-full items-center justify-center p-4">
+                <p className="text-muted-foreground">加载中...</p>
+              </div>
+            }
+          >
+            <ScrollArea className="h-full px-8">
+              <WorkspaceEditPanel tabId={tabId} workspaceId={metadata.id} />
+              <ScrollBar orientation="vertical" />
+            </ScrollArea>
+          </Suspense>
+        </ErrorBoundary>
+      )}
+    </QueryErrorResetBoundary>
+  );
+}

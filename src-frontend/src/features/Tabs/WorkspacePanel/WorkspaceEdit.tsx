@@ -1,63 +1,71 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { open } from "@tauri-apps/plugin-dialog";
-import { Activity, useEffect, useState } from "react";
+import { Loader2Icon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import {
-  createWorkspace,
-  deleteWorkspace,
-  updateWorkspace,
-} from "@/api/workspace";
-import { ConfirmDeleteDialog } from "@/components/custom/dialog/ConfirmDeteteDialog";
+import { fetchAgentsBrief } from "@/api/agent";
+import { createWorkspace, updateWorkspace } from "@/api/workspace";
+import { MultiSelectDialog } from "@/components/custom/dialog/MultiSelectDialog";
+import { FieldItem } from "@/components/custom/item/FieldItem";
 import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Item, ItemContent, ItemTitle } from "@/components/ui/item";
 import { useWorkspaceStore } from "@/stores/workspace-store";
-import type { AgentRead } from "@/types/agent";
+import type { AgentBrief } from "@/types/agent";
 import type { WorkspaceCreate, WorkspaceRead } from "@/types/workspace";
-import { AgentList } from "./AgentList";
+
+type AgentSelectDialogProps = {
+  existingAgents: AgentBrief[];
+  onConfirm?: (selectedAgents: AgentBrief[]) => void;
+};
+
+export function AgentSelectDialog({
+  existingAgents,
+  onConfirm,
+}: AgentSelectDialogProps) {
+  const { data: allAgents, isLoading } = useQuery({
+    queryKey: ["agents", "brief"],
+    queryFn: fetchAgentsBrief,
+  });
+
+  return (
+    <MultiSelectDialog<AgentBrief>
+      values={existingAgents}
+      selections={allAgents ?? []}
+      getKey={(agent) => agent.id}
+      getValue={(agent) => agent.name}
+      onConfirm={onConfirm}
+      placeholder="搜索 Agent..."
+      emptyText="未找到匹配的 Agent"
+      confirmText="确定"
+      cancelText="取消"
+    >
+      <Button type="button" variant="outline" disabled={isLoading}>
+        {isLoading && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+        {isLoading ? "加载中..." : "选择"}
+      </Button>
+    </MultiSelectDialog>
+  );
+}
 
 type WorkspaceEditProps = {
   workspace: WorkspaceRead | WorkspaceCreate;
   onConfirm?: () => void;
-  onCancel?: () => void;
-  onDelete?: () => void;
 };
 
 type FormValues = WorkspaceCreate;
 
-export function WorkspaceEdit({
-  workspace,
-  onConfirm,
-  onCancel,
-  onDelete,
-}: WorkspaceEditProps) {
+export function WorkspaceEdit({ workspace, onConfirm }: WorkspaceEditProps) {
   const isEditMode = "id" in workspace;
   const queryClient = useQueryClient();
-  const { currentWorkspace, setCurrentWorkspace, syncCurrentWorkspace } =
-    useWorkspaceStore();
-  const [usableAgents, setUsableAgents] = useState(
+  const { currentWorkspace, syncCurrentWorkspace } = useWorkspaceStore();
+  const [usableAgents, setUsableAgents] = useState<AgentBrief[]>(
     isEditMode ? workspace.usable_agents : []
   );
 
-  const {
-    handleSubmit,
-    control,
-    setValue,
-    reset,
-    formState: { errors },
-  } = useForm<FormValues>({
-    defaultValues: {
-      name: "",
-      directory: "",
-      usable_agent_ids: [],
-    },
-  });
+  const { handleSubmit, control, setValue, reset } = useForm<FormValues>();
 
   useEffect(() => {
     if (workspace) {
@@ -111,27 +119,6 @@ export function WorkspaceEdit({
     },
   });
 
-  const deleteWorkspaceMutation = useMutation({
-    mutationFn: deleteWorkspace,
-    onSuccess: async (_data, deletedId) => {
-      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-      toast.success("删除成功", {
-        description: "已成功删除工作区。",
-      });
-      onDelete?.();
-
-      // 如果删除的是当前工作区，清空当前工作区
-      if (deletedId === currentWorkspace?.id) {
-        await setCurrentWorkspace(null);
-      }
-    },
-    onError: (error: Error) => {
-      toast.error("删除失败", {
-        description: error.message || "删除工作区时发生错误，请稍后重试。",
-      });
-    },
-  });
-
   async function chooseDirectory() {
     try {
       const selected = await open({ directory: true });
@@ -152,13 +139,7 @@ export function WorkspaceEdit({
     }
   };
 
-  const handleDeleteConfirm = () => {
-    if ("id" in workspace) {
-      deleteWorkspaceMutation.mutate(workspace.id);
-    }
-  };
-
-  function handleAgentConfirm(selectedAgents: AgentRead[]) {
+  function handleAgentConfirm(selectedAgents: AgentBrief[]) {
     setValue(
       "usable_agent_ids",
       selectedAgents.map((a) => a.id)
@@ -167,13 +148,11 @@ export function WorkspaceEdit({
   }
 
   const isLoading =
-    createWorkspaceMutation.isPending ||
-    updateWorkspaceMutation.isPending ||
-    deleteWorkspaceMutation.isPending;
+    createWorkspaceMutation.isPending || updateWorkspaceMutation.isPending;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="border-b p-4">
-      <FieldGroup>
+    <form onSubmit={handleSubmit(onSubmit)} className="h-full py-4">
+      <FieldGroup className="h-full gap-y-2">
         <Controller
           name="name"
           control={control}
@@ -182,12 +161,10 @@ export function WorkspaceEdit({
             minLength: { value: 1, message: "名称不能为空" },
             maxLength: { value: 100, message: "名称最多100字符" },
           }}
-          render={({ field }) => (
-            <Field data-invalid={!!errors.name}>
-              <FieldLabel>名称</FieldLabel>
+          render={({ field, fieldState }) => (
+            <FieldItem title="名称" fieldState={fieldState}>
               <Input {...field} placeholder="请输入工作区名称" />
-              <FieldError errors={errors.name ? [errors.name] : []} />
-            </Field>
+            </FieldItem>
           )}
         />
 
@@ -195,9 +172,8 @@ export function WorkspaceEdit({
           name="directory"
           control={control}
           rules={{ required: "目录路径为必填项" }}
-          render={({ field }) => (
-            <Field data-invalid={!!errors.directory}>
-              <FieldLabel>目录路径</FieldLabel>
+          render={({ field, fieldState }) => (
+            <FieldItem title="目录路径" fieldState={fieldState}>
               <div className="flex gap-2">
                 <Input
                   {...field}
@@ -212,36 +188,35 @@ export function WorkspaceEdit({
                   选择
                 </Button>
               </div>
-              <FieldError errors={errors.directory ? [errors.directory] : []} />
-            </Field>
+            </FieldItem>
           )}
         />
 
-        <AgentList agents={usableAgents} onChange={handleAgentConfirm} />
+        <Controller
+          name="usable_agent_ids"
+          control={control}
+          render={({ fieldState }) => (
+            <div>
+              <FieldItem title="可用 Agent" fieldState={fieldState}>
+                <AgentSelectDialog
+                  existingAgents={usableAgents}
+                  onConfirm={handleAgentConfirm}
+                />
+              </FieldItem>
+              <div className="mt-2 space-y-2">
+                {usableAgents.map(({ name, id }) => (
+                  <Item key={id} variant="outline" size="sm">
+                    <ItemContent>
+                      <ItemTitle>{name}</ItemTitle>
+                    </ItemContent>
+                  </Item>
+                ))}
+              </div>
+            </div>
+          )}
+        />
 
-        <div className="mt-4 flex justify-end gap-2">
-          <Activity mode={isEditMode ? "visible" : "hidden"}>
-            <ConfirmDeleteDialog
-              description={`确定要删除工作区"${workspace?.name ?? ""}"吗？此操作无法撤销。`}
-              onConfirm={handleDeleteConfirm}
-              isDeleting={deleteWorkspaceMutation.isPending}
-            >
-              <Button type="button" variant="destructive" disabled={isLoading}>
-                {deleteWorkspaceMutation.isPending ? "删除中..." : "删除"}
-              </Button>
-            </ConfirmDeleteDialog>
-          </Activity>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              reset();
-              onCancel?.();
-            }}
-            disabled={isLoading}
-          >
-            取消
-          </Button>
+        <div className="mt-4 flex justify-end">
           <Button type="submit" disabled={isLoading}>
             {(() => {
               if (isEditMode) {

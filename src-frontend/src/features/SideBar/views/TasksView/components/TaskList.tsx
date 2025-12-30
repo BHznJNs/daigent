@@ -31,7 +31,7 @@ export function TaskList({ workspaceId }: TaskListProps) {
 
     const existingTab = tabs.find(
       (t) =>
-        t.type === "task" && !t.metadata.isDraft && t.metadata.taskId === taskId
+        t.type === "task" && !t.metadata.isDraft && t.metadata.id === taskId
     );
 
     if (existingTab) {
@@ -43,8 +43,8 @@ export function TaskList({ workspaceId }: TaskListProps) {
         type: "task",
         metadata: {
           isDraft: false,
-          taskId: task.id,
-          taskType: task.type,
+          id: task.id,
+          type: task.type,
         },
       });
     }

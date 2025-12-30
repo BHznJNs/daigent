@@ -1,0 +1,65 @@
+import type { ControllerFieldState } from "react-hook-form";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { cn } from "@/lib/utils";
+
+export type FieldItemProps = {
+  title: React.ReactNode;
+  description?: React.ReactNode;
+  align?: "start" | "center" | "end";
+  children: React.ReactNode;
+  fieldState: ControllerFieldState;
+  className?: string;
+  titleClassName?: string;
+  descriptionClassName?: string;
+  contentClassName?: string;
+};
+
+export function FieldItem({
+  title,
+  description,
+  children,
+  fieldState,
+  className,
+  titleClassName,
+  descriptionClassName,
+  contentClassName,
+  align = "center",
+}: FieldItemProps) {
+  const alignClassName = {
+    start: "items-start",
+    center: "items-center",
+    end: "items-end",
+  }[align];
+  return (
+    <Field
+      className={cn(
+        "flex flex-row justify-between py-2 pr-1.5",
+        className,
+        alignClassName
+      )}
+      data-invalid={fieldState.invalid}
+    >
+      <div className="space-y-1 pr-4">
+        <FieldLabel
+          className={cn("whitespace-nowrap leading-none", titleClassName)}
+        >
+          {title}
+        </FieldLabel>
+        {description && (
+          <div
+            className={cn(
+              "text-muted-foreground text-xs",
+              descriptionClassName
+            )}
+          >
+            {description}
+          </div>
+        )}
+        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+      </div>
+      <div className={cn("flex items-center justify-end", contentClassName)}>
+        {children}
+      </div>
+    </Field>
+  );
+}

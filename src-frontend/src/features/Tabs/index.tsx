@@ -16,7 +16,8 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { XIcon } from "lucide-react";
+import { BotIcon, FolderCogIcon, type LucideIcon, XIcon } from "lucide-react";
+import { DynamicIcon } from "lucide-react/dynamic";
 import { useEffect, useRef } from "react";
 import {
   Tab as ReactTab,
@@ -28,8 +29,19 @@ import {
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useTabsStore } from "@/stores/tabs-store";
-import type { Tab } from "@/types/tab";
+import type { Tab, TaskTabMetadata, WorkspaceTabMetadata } from "@/types/tab";
 import { TaskPanel } from "./TaskPanel";
+import { WorkspacePanel } from "./WorkspacePanel";
+
+const tabIconMap: Record<Tab["type"], LucideIcon> = {
+  task: BotIcon,
+  workspace: FolderCogIcon,
+};
+
+export type TabPanelProps<Metadata> = {
+  tabId: string;
+  metadata: Metadata;
+};
 
 function SortableTab({ tab }: { tab: Tab }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -57,13 +69,21 @@ function SortableTab({ tab }: { tab: Tab }) {
     }
   };
 
+  const tabIcon = (() => {
+    if (tab.icon) {
+      return <DynamicIcon name={tab.icon} size="1em" />;
+    }
+    const TargetIcon = tabIconMap[tab.type];
+    return <TargetIcon size="1em" />;
+  })();
+
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <ReactTab
         key={tab.id}
         onMouseDown={(e) => handleMouseDown(e, tab.id)}
         className={cn(
-          "group flex min-w-24 shrink-0 cursor-pointer items-center justify-between gap-2 text-nowrap border-r border-b py-2 pr-2 pl-4 text-muted-foreground text-sm outline-0 transition-colors duration-200 ease-in-out",
+          "group flex min-w-24 shrink-0 cursor-pointer items-center justify-between gap-2 text-nowrap border-r border-b p-2 pl-3 text-muted-foreground text-sm outline-0 transition-colors duration-200 ease-in-out",
           "hover:bg-card/60 hover:text-primary",
           {
             "border-b-transparent bg-card! text-primary!":
@@ -71,9 +91,10 @@ function SortableTab({ tab }: { tab: Tab }) {
           }
         )}
       >
+        <div className="text-base">{tabIcon}</div>
         <span>{tab.title}</span>
         <XIcon
-          size={14}
+          size="1em"
           className={cn(
             "rounded-sm opacity-0 transition-opacity duration-200 ease-in-out group-hover:opacity-100",
             { "opacity-100": tab.id === activeTabId }
@@ -87,6 +108,24 @@ function SortableTab({ tab }: { tab: Tab }) {
   );
 }
 SortableTab.tabsRole = "Tab";
+
+function TabPanelRenderer({ tab }: { tab: Tab }) {
+  switch (tab.type) {
+    case "task":
+      return (
+        <TaskPanel tabId={tab.id} metadata={tab.metadata as TaskTabMetadata} />
+      );
+    case "workspace":
+      return (
+        <WorkspacePanel
+          tabId={tab.id}
+          metadata={tab.metadata as WorkspaceTabMetadata}
+        />
+      );
+    default:
+      return null;
+  }
+}
 
 export function Tabs() {
   const { tabs, activeTabId, setActiveTab, setTabs } = useTabsStore();
@@ -184,14 +223,7 @@ export function Tabs() {
             }
             return tabs.map((tab) => (
               <ReactTabPanel key={tab.id} className="hidden h-full bg-card">
-                {(() => {
-                  switch (tab.type) {
-                    case "task":
-                      return <TaskPanel tabData={tab} />;
-                    default:
-                      return null;
-                  }
-                })()}
+                <TabPanelRenderer tab={tab} />
               </ReactTabPanel>
             ));
           })()}

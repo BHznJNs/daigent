@@ -6,6 +6,10 @@ class AgentBase(DTOBase):
     name: str
     system_prompt: str
 
+class AgentBrief(DTOBase):
+    id: int
+    name: str
+
 class AgentRead(AgentBase):
     id: int
     model: LlmModelRead | None = None

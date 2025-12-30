@@ -5,6 +5,11 @@ export type AgentBase = {
   system_prompt: string;
 };
 
+export type AgentBrief = {
+  id: number;
+  name: string;
+};
+
 export type AgentRead = AgentBase & {
   id: number;
   model: LlmModelRead | null;

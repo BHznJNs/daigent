@@ -1,6 +1,7 @@
+import { produce } from "immer";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Tab } from "@/types/tab";
+import type { Tab, TabBase } from "@/types/tab";
 
 type TabsState = {
   tabs: Tab[];
@@ -9,9 +10,10 @@ type TabsState = {
 
 type TabsActions = {
   addTab: (tab: Tab) => void;
-  setActiveTab: (tabId: string) => void;
   setTabs: (tabs: Tab[]) => void;
-  updateTab: (tab: Tab) => void;
+  setActiveTab: (tabId: string) => void;
+  updateTab: (tabId: string, tabData: Partial<TabBase>) => void;
+  updateTabMetadata: (tabId: string, metadata: Tab["metadata"]) => void;
   removeTab: (tabId: string) => void;
 };
 
@@ -22,6 +24,19 @@ export const useTabsStore = create<TabsStore>()(
     (set, get) => ({
       tabs: [],
       activeTabId: null,
+      addTab(tab) {
+        set(
+          produce((state: TabsState) => {
+            const exists = state.tabs.some((t) => t.id === tab.id);
+            if (exists) {
+              state.activeTabId = tab.id;
+              return;
+            }
+            state.tabs.push(tab);
+            state.activeTabId = tab.id;
+          })
+        );
+      },
       setTabs(tabs) {
         const currentActive = get().activeTabId;
         const activeStillExists = tabs.some((t) => t.id === currentActive);
@@ -30,20 +45,6 @@ export const useTabsStore = create<TabsStore>()(
           activeTabId: activeStillExists
             ? currentActive
             : (tabs[0]?.id ?? null),
-        });
-      },
-      addTab(tab) {
-        set((state) => {
-          const exists = state.tabs.some((t) => t.id === tab.id);
-          if (exists) {
-            return {
-              activeTabId: tab.id,
-            };
-          }
-          return {
-            tabs: [...state.tabs, tab],
-            activeTabId: tab.id,
-          };
         });
       },
       setActiveTab(tabId) {
@@ -55,42 +56,50 @@ export const useTabsStore = create<TabsStore>()(
           return { activeTabId: tabId };
         });
       },
-      updateTab(tab) {
-        set((state) => ({
-          tabs: state.tabs.map((t) => (t.id === tab.id ? tab : t)),
-        }));
+      updateTab(tabId, tabData) {
+        set(
+          produce((state: TabsState) => {
+            const tab = state.tabs.find((t) => t.id === tabId);
+            if (!tab) {
+              return;
+            }
+            Object.assign(tab, tabData);
+          })
+        );
+      },
+      updateTabMetadata(tabId, metadata) {
+        set(
+          produce((state: TabsState) => {
+            const tab = state.tabs.find((t) => t.id === tabId);
+            if (!tab) {
+              return;
+            }
+            tab.metadata = metadata;
+          })
+        );
       },
       removeTab(tabId) {
-        set((state) => {
-          const idx = state.tabs.findIndex((t) => t.id === tabId);
-          if (idx === -1) {
-            // passed in tabId does not exist
-            return {};
-          }
-
-          const newTabs = state.tabs.filter((tab) => tab.id !== tabId);
-
-          if (state.activeTabId !== tabId) {
-            return { tabs: newTabs };
-          }
-
-          if (newTabs.length === 0) {
-            return {
-              tabs: newTabs,
-              activeTabId: null,
-            };
-          }
-
-          const hasRightTab = idx < newTabs.length;
-          const newActiveTabId = hasRightTab
-            ? newTabs[idx].id
-            : newTabs[idx - 1].id;
-
-          return {
-            tabs: newTabs,
-            activeTabId: newActiveTabId,
-          };
-        });
+        set(
+          produce((state: TabsState) => {
+            const idx = state.tabs.findIndex((t) => t.id === tabId);
+            if (idx === -1) {
+              // passed in tabId does not exist
+              return;
+            }
+            state.tabs.splice(idx, 1);
+            if (state.activeTabId !== tabId) {
+              return;
+            }
+            if (state.tabs.length === 0) {
+              state.activeTabId = null;
+              return;
+            }
+            const hasTabOnRight = idx < state.tabs.length;
+            state.activeTabId = hasTabOnRight
+              ? state.tabs[idx].id
+              : state.tabs[idx - 1].id;
+          })
+        );
       },
     }),
     { name: "tabs" }
