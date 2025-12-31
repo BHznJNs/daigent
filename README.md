@@ -1,1 +1,3 @@
-# Daigent
+# Dais
+
+D (Desktop) + AI + S (Studio)

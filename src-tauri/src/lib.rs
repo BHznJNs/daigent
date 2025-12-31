@@ -2,8 +2,10 @@ mod plugins;
 mod utils;
 
 use std::collections::HashMap;
+use tauri::Manager;
 use tauri_plugin_shell::ShellExt;
 use tauri_plugin_shell::process::CommandEvent;
+use tauri_plugin_window_state::{WindowExt, StateFlags};
 pub use utils::Args;
 
 fn start_sidecar(app: tauri::AppHandle, server_port: u16) -> Result<(), String> {
@@ -50,6 +52,7 @@ pub fn run(args: Args) {
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_shell::init())
     .plugin(tauri_plugin_dialog::init())
+    .plugin(tauri_plugin_window_state::Builder::default().build())
     .plugin(plugins::inject_vars::init(HashMap::from([
       ("dev", args.dev.to_string()),
       ("server_port", server_port.to_string()),
@@ -58,6 +61,10 @@ pub fn run(args: Args) {
       if !args.dev {
         // only start sidecar in production mode
         start_sidecar(app.handle().clone(), server_port)?;
+      }
+      if let Some(window) = app.get_webview_window("main") {
+        let _ = window.restore_state(StateFlags::all());
+        let _ = window.show();
       }
       Ok(())
     })

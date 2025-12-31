@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "daigent",
+  "productName": "Dais",
   "version": "0.1.0",
-  "identifier": "org.daigent.desktop",
+  "identifier": "org.dais.desktop",
   "build": {
     "beforeDevCommand": "pnpm run dev:all",
     "devUrl": "http://localhost:1420",
@@ -12,9 +12,11 @@
   "app": {
     "windows": [
       {
-        "title": "daigent",
+        "label": "main",
+        "title": "Dais",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "visible": false
       }
     ],
     "security": {
@@ -31,7 +33,11 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": ["./_internal/"],
-    "externalBin": ["./bin/server"]
+    "resources": [
+      "./_internal/"
+    ],
+    "externalBin": [
+      "./bin/server"
+    ]
   }
 }

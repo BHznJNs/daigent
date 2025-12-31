@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from platformdirs import user_data_dir
 from . import models
 
-APP_NAME = "org.daigent.desktop"
+APP_NAME = "org.dais.desktop"
 
 data_dir = Path(user_data_dir(APP_NAME, appauthor=False, ensure_exists=True))
 db_path = data_dir / "sqlite.db"

@@ -1,5 +1,5 @@
 ---
-name: "Daigent"
+name: "Dais"
 description: "一个通用的 LLM Agent 桌面客户端"
 author: "BHznJNs"
 authorUrl: "https://github.com/BHznJNs"
@@ -24,6 +24,7 @@ tags: ["desktop", "LLM", "agent"]
 后端框架：flask
 数据库：sqlite
 ORM：SQLAlchemy + Alembic
+数据校验：Pydantic
 
 ## 关键技术点实现
 
@@ -51,9 +52,9 @@ ORM：SQLAlchemy + Alembic
 - **类型**: 使用 TypeScript 编写，禁止使用 any
 - **样式规范**: 使用 TailwindCSS 类名，禁止写 css 文件
 - **页面路由**: 在 `frontend/src/pages/` 新增组件即自动成为路由
-- **组件编写**: 统一使用 `function Component(props: Props) {}` 格式编写
+- **组件编写**: 统一使用 `function Component(props: Props) {}` 格式编写，不要使用箭头函数
   - **图标组件使用**: 统一使用 lucide-react 库提供的图标组件，且使用时需要带 `Icon` 后缀。（例如，使用 `Plus` 图标应该导入 `PlusIcon`）
-  - **dialog 组件使用**: 在创建 dialog 组件时，需要基于 shadcn 提供的 dialog 组件创建，同时必须使用 DialogTrigger 来控制 dialog 状态，不要在 dialog 组件外额外使用 useState 管理 dialog 状态
+  - **dialog 组件使用**: 在创建通用 dialog 组件时，需要基于 shadcn 提供的 dialog 组件创建，同时必须使用 DialogTrigger 来控制 dialog 状态，不要在 dialog 组件外额外使用 useState 管理 dialog 状态
 - **错误处理**: 在出现错误时统一使用 toast 组件展示
 
 #### 后端代码风格
