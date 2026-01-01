@@ -34,6 +34,11 @@ jobs:
         with:
           version: 10
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
       - name: setup node
         uses: actions/setup-node@v4
         with:

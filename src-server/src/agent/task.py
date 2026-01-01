@@ -58,6 +58,7 @@ class AgentTask:
                 ask_user,
                 finish_task,
                 self._file_system_tool.read_file,
+                self._file_system_tool.list_directory,
             ],
             tool_choice="required",
         )

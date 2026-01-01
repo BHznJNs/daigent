@@ -3,7 +3,7 @@ flask==3.1.2
 flask-cors==6.0.1
 Flask-Pydantic==0.14.0
 loguru==0.7.3
-liteai-sdk==0.3.22
+liteai-sdk==0.3.23
 markitdown[docx,pdf,pptx]==0.1.4
 platformdirs==4.5.0
 pyinstaller==6.16.0
