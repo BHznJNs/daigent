@@ -2,7 +2,7 @@ from collections.abc import Generator
 from dataclasses import asdict
 from loguru import logger
 from flask import Blueprint, Response, jsonify, stream_with_context
-from liteai_sdk import TextChunk, ToolCallChunk, UserMessage
+from liteai_sdk import TextChunk, UsageChunk, ToolCallChunk, UserMessage
 from pydantic import BaseModel
 from flask_pydantic import validate
 from .types import FlaskResponse, PaginatedResponse
@@ -15,7 +15,6 @@ from ..agent.types import (
 )
 from ..services.task import TaskService
 from ..db.schemas import task as task_schemas
-from ..db.models import task as task_models
 from ..utils.sse import format_sse
 
 tasks_bp = Blueprint("tasks", __name__)
@@ -96,12 +95,18 @@ def agent_stream(async_task_id: int, agent_task: AgentTask) -> Generator[str]:
             match event:
                 case MessageChunkEvent(chunk):
                     match chunk:
-                        case TextChunk(content=content):
+                        case TextChunk(content):
                             yield format_sse(event=event.event_id, data={
                                 "type": "text",
                                 "content": content,
                             })
-                        case ToolCallChunk():
+                        case UsageChunk() as chunk:
+                            yield format_sse(event=event.event_id, data={
+                                "type": "usage",
+                                "max_tokens": agent_task._ctx.model.context_size,
+                                **asdict(chunk),
+                            })
+                        case ToolCallChunk() as chunk:
                             yield format_sse(event=event.event_id, data={
                                 "type": "tool_call",
                                 "data": asdict(chunk),
@@ -111,12 +116,6 @@ def agent_stream(async_task_id: int, agent_task: AgentTask) -> Generator[str]:
                     yield format_sse(event=event.event_id, data=None)
 
                 case MessageEndEvent():
-                    yield format_sse(event=event.event_id, data=None)
-
-                case TaskDoneEvent():
-                    yield format_sse(event=event.event_id, data=None)
-
-                case TaskInterruptedEvent():
                     yield format_sse(event=event.event_id, data=None)
 
                 case ToolExecutedEvent(tool_call_id=tool_call_id, result=result):
@@ -134,6 +133,12 @@ def agent_stream(async_task_id: int, agent_task: AgentTask) -> Generator[str]:
                     yield format_sse(event=event.event_id, data={
                         "tool_call_id": tool_call_id,
                     })
+
+                case TaskDoneEvent():
+                    yield format_sse(event=event.event_id, data=None)
+
+                case TaskInterruptedEvent():
+                    yield format_sse(event=event.event_id, data=None)
 
                 case ErrorEvent(error=error):
                     _logger.exception("Task failed: {}", error)

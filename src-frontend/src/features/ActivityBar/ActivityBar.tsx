@@ -1,5 +1,4 @@
 import {
-  BlocksIcon,
   BotMessageSquareIcon,
   FoldersIcon,
   HammerIcon,
@@ -36,11 +35,11 @@ const topViews: { id: View; title: string; icon: React.ReactNode }[] = [
     title: "ToolSets",
     icon: <HammerIcon />,
   },
-  {
-    id: "plugins",
-    title: "Plugins",
-    icon: <BlocksIcon />,
-  },
+  // {
+  //   id: "plugins",
+  //   title: "Plugins",
+  //   icon: <BlocksIcon />,
+  // },
 ];
 
 const bottomViews: { id: View; title: string; icon: React.ReactNode }[] = [

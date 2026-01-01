@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/empty";
 import {
   Item,
+  ItemActions,
   ItemContent,
   ItemDescription,
   ItemMedia,
@@ -196,7 +197,7 @@ function WorkspaceItem({
         <ItemTitle>{workspace.name}</ItemTitle>
         <ItemDescription>{workspace.directory}</ItemDescription>
       </ItemContent>
-      <div className="flex items-center gap-1">
+      <ItemActions>
         <Button
           variant="ghost"
           size="icon"
@@ -222,7 +223,7 @@ function WorkspaceItem({
             <TrashIcon className="size-4" />
           </Button>
         </ConfirmDeleteDialog>
-      </div>
+      </ItemActions>
     </Item>
   );
 }

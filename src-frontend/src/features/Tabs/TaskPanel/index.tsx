@@ -128,6 +128,7 @@ export function TaskPanel({ tabId, metadata }: TabPanelProps<TaskTabMetadata>) {
         taskType={metadata.type}
         taskData={taskData}
         taskState={taskRunner.state}
+        taskUsage={taskRunner.usage}
         onSubmit={handleSubmit}
         onCancel={taskRunner.cancel}
       />

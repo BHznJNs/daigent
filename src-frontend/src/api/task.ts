@@ -1,6 +1,6 @@
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import type { ToolCallChunk, UserMessage } from "@/types/message";
-import type { TaskCreate, TaskRead } from "@/types/task";
+import type { TaskCreate, TaskRead, TaskUsage } from "@/types/task";
 import { API_BASE, fetchApi, type PaginatedResponse } from "./index";
 
 export async function fetchTasks(
@@ -42,91 +42,67 @@ export async function deleteTask(taskId: number): Promise<void> {
   });
 }
 
-// ============================================
-// Agent Event Types (对应后端 AgentEvent)
-// ============================================
+// =========================================
+// === === === Agent Event Types === === ===
+// =========================================
 
-/**
- * Message chunk event data - 消息块事件数据
- * 对应后端：MessageChunkEvent
- */
 export type MessageChunkEventData =
   | {
       type: "text";
       content: string;
     }
+  | ({
+      type: "usage";
+    } & TaskUsage)
   | {
       type: "tool_call";
       data: ToolCallChunk;
     };
 
-/**
- * Tool executed event data - 工具执行结果事件数据
- * 对应后端：ToolExecutedEvent
- */
 export type ToolExecutedEventData = {
   tool_call_id: string;
   result: string | null;
 };
 
-/**
- * Tool require user response event data - 工具需要用户响应事件数据
- * 对应后端：ToolRequireUserResponseEvent
- */
 export type ToolRequireUserResponseEventData = {
   tool_name: "ask_user" | "finish_task";
 };
 
-/**
- * Tool require permission event data - 工具需要权限确认事件数据
- * 对应后端：ToolRequirePermissionEvent
- */
 export type ToolRequirePermissionEventData = {
   tool_call_id: string;
 };
 
-/**
- * Error event data - 错误事件数据
- * 对应后端：ErrorEvent
- */
 export type ErrorEventData = {
   message: string;
 };
 
-/**
- * SSE Event Types - 所有可能的 SSE 事件类型
- * 对应后端 agent_stream 函数中的所有事件
- */
 export type AgentEventType =
-  | "MESSAGE_CHUNK" // MessageChunkEvent - 消息块（文本或工具调用）
-  | "MESSAGE_START" // MessageStartEvent - 消息开始
-  | "MESSAGE_END" // MessageEndEvent - 消息结束
-  | "TASK_DONE" // TaskDoneEvent - 任务完成
-  | "TASK_INTERRUPTED" // TaskInterruptedEvent - 任务中断
-  | "TOOL_EXECUTED" // ToolExecutedEvent - 工具执行完成
-  | "TOOL_REQUIRE_USER_RESPONSE" // ToolRequireUserResponseEvent - 工具需要用户响应
-  | "TOOL_REQUIRE_PERMISSION" // ToolRequirePermissionEvent - 工具需要权限确认
-  | "ERROR"; // ErrorEvent - 错误事件
+  | "MESSAGE_CHUNK"
+  | "MESSAGE_START"
+  | "MESSAGE_END"
+  | "TASK_DONE"
+  | "TASK_INTERRUPTED"
+  | "TOOL_EXECUTED"
+  | "TOOL_REQUIRE_USER_RESPONSE"
+  | "TOOL_REQUIRE_PERMISSION"
+  | "ERROR";
 
-/**
- * Task SSE Callbacks - 任务 SSE 事件回调接口
- */
 export type TaskSseCallbacks = {
-  // 消息相关回调
+  // message related callbacks
   onMessageStart?: () => void;
   onMessageEnd?: () => void;
   onMessageChunk?: (chunk: MessageChunkEventData) => void;
 
-  // 工具相关回调
+  // tool related callbacks
   onToolExecuted?: (data: ToolExecutedEventData) => void;
   onToolRequireUserResponse?: (data: ToolRequireUserResponseEventData) => void;
   onToolRequirePermission?: (data: ToolRequirePermissionEventData) => void;
 
-  // 任务状态回调
+  // task status callbacks
   onTaskDone?: () => void;
   onTaskInterrupted?: () => void;
 
-  // 错误和关闭回调
+  // error and close callbacks
   onError?: (error: Error) => void;
   onClose?: () => void;
 };

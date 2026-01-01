@@ -2,6 +2,17 @@ import type { ChatStatus } from "ai";
 import { ChevronsUpDownIcon, Loader2Icon } from "lucide-react";
 import { Activity, useEffect, useState } from "react";
 import {
+  Context,
+  ContextCacheUsage,
+  ContextContent,
+  ContextContentBody,
+  ContextContentHeader,
+  ContextInputUsage,
+  ContextOutputUsage,
+  ContextReasoningUsage,
+  ContextTrigger,
+} from "@/components/ai-elements/context";
+import {
   PromptInput as BasePromptInput,
   PromptInputBody,
   PromptInputFooter,
@@ -15,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { ORCHESTRATOR_ID } from "@/constants/agent";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { AgentRead } from "@/types/agent";
-import type { TaskRead, TaskType } from "@/types/task";
+import type { TaskRead, TaskType, TaskUsage } from "@/types/task";
 import type { TaskState } from "./use-task-runner";
 
 type AgentSelectDialogProps = {
@@ -65,6 +76,7 @@ type PromptInputProps = {
   taskType: TaskType;
   taskData: TaskRead | null;
   taskState: TaskState;
+  taskUsage: TaskUsage;
   onSubmit: (message: PromptInputMessage, agentId: number) => void;
   onCancel?: () => void;
 };
@@ -81,6 +93,7 @@ export function PromptInput({
   taskType,
   taskData,
   taskState,
+  taskUsage,
   onSubmit,
   onCancel,
 }: PromptInputProps) {
@@ -118,16 +131,44 @@ export function PromptInput({
       </PromptInputBody>
       <PromptInputFooter>
         <PromptInputTools>
-          <Activity mode={taskType === "agent" ? "visible" : "hidden"}>
-            <AgentSelectDialog
-              value={selectedAgent}
-              onValueChange={setSelectedAgent}
-            />
-          </Activity>
-          <Activity mode={taskType === "orchestration" ? "visible" : "hidden"}>
-            <Button variant="outline" disabled>
-              Orchestrator
-            </Button>
+          {taskType === "agent" && (
+            <Activity mode={taskType === "agent" ? "visible" : "hidden"}>
+              <AgentSelectDialog
+                value={selectedAgent}
+                onValueChange={setSelectedAgent}
+              />
+            </Activity>
+          )}
+          {taskType === "orchestration" && (
+            <Activity
+              mode={taskType === "orchestration" ? "visible" : "hidden"}
+            >
+              <Button variant="outline" disabled>
+                Orchestrator
+              </Button>
+            </Activity>
+          )}
+          <Activity mode={taskUsage.max_tokens ? "visible" : "hidden"}>
+            <Context
+              maxTokens={taskUsage.max_tokens}
+              usage={{
+                inputTokens: taskUsage.input_tokens,
+                outputTokens: taskUsage.output_tokens,
+                totalTokens: taskUsage.total_tokens,
+              }}
+              usedTokens={taskUsage.total_tokens}
+            >
+              <ContextTrigger />
+              <ContextContent>
+                <ContextContentHeader />
+                <ContextContentBody>
+                  <ContextInputUsage />
+                  <ContextOutputUsage />
+                  <ContextReasoningUsage />
+                  <ContextCacheUsage />
+                </ContextContentBody>
+              </ContextContent>
+            </Context>
           </Activity>
         </PromptInputTools>
         <PromptInputSubmit

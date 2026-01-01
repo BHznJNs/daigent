@@ -2,6 +2,15 @@ import type { Message } from "./message";
 
 export type TaskType = "agent" | "orchestration";
 
+export type TaskUsage = {
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  max_tokens: number;
+};
+
+// --- --- --- --- --- ---
+
 export type TaskBase = {
   title: string;
   type: TaskType;

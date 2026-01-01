@@ -51,7 +51,12 @@ export function WorkspacePanel({
   metadata,
 }: TabPanelProps<WorkspaceTabMetadata>) {
   if (metadata.mode === "create") {
-    return <WorkspaceCreatePanel tabId={tabId} />;
+    return (
+      <ScrollArea className="h-full px-8">
+        <WorkspaceCreatePanel tabId={tabId} />
+        <ScrollBar orientation="vertical" />
+      </ScrollArea>
+    );
   }
 
   return (

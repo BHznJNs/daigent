@@ -6,10 +6,39 @@ import {
   EmptyDescription,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Item, ItemContent, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { tabIdFactory } from "@/lib/tab";
 import { useTabsStore } from "@/stores/tabs-store";
-import { TaskItem } from "./TaskItem";
+import type { TaskRead } from "@/types/task";
+import { TaskIcon } from "./TaskIcon";
+
+type TaskItemProps = {
+  task: TaskRead;
+  onClick: (taskId: number) => void;
+};
+
+export function TaskItem({ task, onClick }: TaskItemProps) {
+  const handleClick = () => {
+    onClick(task.id);
+  };
+
+  return (
+    <Item
+      variant="outline"
+      size="sm"
+      className="flex cursor-pointer flex-nowrap rounded-none border-t-0 border-r-0 border-l-0 hover:bg-accent/30"
+      onClick={handleClick}
+    >
+      <ItemMedia variant="icon">
+        <TaskIcon taskType={task.type} className="size-4" />
+      </ItemMedia>
+      <ItemContent>
+        <ItemTitle>{task.title}</ItemTitle>
+      </ItemContent>
+    </Item>
+  );
+}
 
 type TaskListProps = {
   workspaceId: number;

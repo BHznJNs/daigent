@@ -16,8 +16,10 @@ import {
 } from "@/components/ui/empty";
 import {
   Item,
+  ItemActions,
   ItemContent,
   ItemDescription,
+  ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -51,7 +53,6 @@ function openAgentEditTab({
   addTab,
   setActiveTab,
 }: OpenAgentEditTabParams) {
-  // 检查是否已存在该 Agent 的编辑 tab
   const existingTab = tabs.find(
     (tab) =>
       tab.type === "agent" &&
@@ -60,10 +61,8 @@ function openAgentEditTab({
   );
 
   if (existingTab) {
-    // 如果已存在，激活该 tab
     setActiveTab(existingTab.id);
   } else {
-    // 如果不存在，创建新 tab
     const newTab = createAgentEditTab(agentId, agentName);
     addTab(newTab);
   }
@@ -125,16 +124,16 @@ function AgentItem({ agent }: AgentItemProps) {
       size="sm"
       className="flex cursor-default flex-nowrap rounded-none border-t-0 border-r-0 border-l-0 hover:bg-accent/30"
     >
-      <div className="flex flex-1 items-center gap-3 px-3">
+      <ItemMedia variant="icon">
         <BotIcon className="size-4" />
-        <ItemContent>
-          <ItemTitle>{agent.name}</ItemTitle>
-          <ItemDescription>
-            {agent.model ? agent.model.name : "未关联模型"}
-          </ItemDescription>
-        </ItemContent>
-      </div>
-      <div className="flex items-center gap-1">
+      </ItemMedia>
+      <ItemContent>
+        <ItemTitle>{agent.name}</ItemTitle>
+        <ItemDescription>
+          {agent.model ? agent.model.name : "未关联模型"}
+        </ItemDescription>
+      </ItemContent>
+      <ItemActions>
         <Button
           variant="ghost"
           size="icon"
@@ -160,7 +159,7 @@ function AgentItem({ agent }: AgentItemProps) {
             <TrashIcon className="size-4" />
           </Button>
         </ConfirmDeleteDialog>
-      </div>
+      </ItemActions>
     </Item>
   );
 }
