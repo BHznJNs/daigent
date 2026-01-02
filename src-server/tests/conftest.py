@@ -79,3 +79,48 @@ def empty_directory(temp_workspace):
     dir_path = Path(temp_workspace) / "empty_dir"
     dir_path.mkdir()
     return "empty_dir"
+
+
+@pytest.fixture
+def file_with_content(temp_workspace):
+    file_path = Path(temp_workspace) / "editable.txt"
+    content = "Original content\nSecond line\nThird line"
+    file_path.write_text(content, encoding="utf-8")
+    return "editable.txt", content
+
+
+@pytest.fixture
+def directory_with_files(temp_workspace):
+    dir_path = Path(temp_workspace) / "test_dir"
+    dir_path.mkdir()
+    
+    (dir_path / "file1.txt").write_text("File 1 content", encoding="utf-8")
+    (dir_path / "file2.txt").write_text("File 2 content", encoding="utf-8")
+    (dir_path / "file3.txt").write_text("File 3 content", encoding="utf-8")
+    
+    return "test_dir"
+
+
+@pytest.fixture
+def nested_structure(temp_workspace):
+    base = Path(temp_workspace) / "complex_structure"
+    base.mkdir()
+
+    (base / "level1").mkdir()
+    (base / "level1" / "level2").mkdir()
+    (base / "level1" / "level2" / "level3").mkdir()
+
+    (base / "root.txt").write_text("Root level file", encoding="utf-8")
+    (base / "level1" / "l1.txt").write_text("Level 1 file", encoding="utf-8")
+    (base / "level1" / "level2" / "l2.txt").write_text("Level 2 file", encoding="utf-8")
+    (base / "level1" / "level2" / "level3" / "l3.txt").write_text("Level 3 file", encoding="utf-8")
+
+    return "complex_structure"
+
+
+@pytest.fixture
+def file_with_duplicate_content(temp_workspace):
+    file_path = Path(temp_workspace) / "duplicate.txt"
+    content = "Duplicate line\nUnique line\nDuplicate line\nAnother unique line"
+    file_path.write_text(content, encoding="utf-8")
+    return "duplicate.txt", content

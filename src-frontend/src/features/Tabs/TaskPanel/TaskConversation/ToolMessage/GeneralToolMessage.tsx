@@ -1,4 +1,4 @@
-import { Activity } from "react";
+import { Activity, useMemo } from "react";
 import {
   Tool,
   ToolContent,
@@ -36,6 +36,10 @@ export function GeneralToolMessage({ message }: GeneralToolMessageProps) {
     }
     return "input-streaming";
   })();
+  const inputObj = useMemo(
+    () => JSON.parse(message.arguments),
+    [message.arguments]
+  );
   return (
     <Tool defaultOpen={toolState === "approval-requested"}>
       <ToolHeader
@@ -43,7 +47,7 @@ export function GeneralToolMessage({ message }: GeneralToolMessageProps) {
         state={toolState as ToolHeaderProps["state"]}
       />
       <ToolContent>
-        <ToolInput input={message.arguments} />
+        <ToolInput input={inputObj} />
         <Activity
           mode={(message.result ?? message.error) ? "visible" : "hidden"}
         >

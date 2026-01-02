@@ -1,3 +1,5 @@
+import difflib
+import shutil
 from pathlib import Path
 from markitdown import MarkItDown
 
@@ -7,6 +9,9 @@ class FileSystemTool:
             cwd = str(Path.home())
         self.cwd = cwd
         self.md = MarkItDown()
+
+        # this set should stores file absolute path
+        self._read_file_set = set()
 
     def _is_markitdown_convertable_binary(self, path: str) -> bool:
         return Path(path).suffix.lower() in (".pdf", ".docx", ".pptx", ".xlsx", ".epub")
@@ -40,6 +45,8 @@ class FileSystemTool:
         else:
             with open(abs_path, "r", encoding="utf-8") as f:
                 lines = f.read().splitlines()
+
+        self._read_file_set.add(str(abs_path))
 
         if enable_line_numbers:
             return "\n".join(f"{i:4d} | {line}" for i, line in enumerate(lines, 1))
@@ -176,7 +183,7 @@ class FileSystemTool:
             3 [file] __init__.py
         """
 
-        def _format_item(item: Path) -> str:
+        def format_item(item: Path) -> str:
             if item.is_symlink():
                 try:
                     target = item.readlink()
@@ -189,7 +196,7 @@ class FileSystemTool:
                 item_type = "file"
             return f"[{item_type}] {item.name}"
 
-        def _format_items_flat(directory: Path) -> list[str]:
+        def format_items_flat(directory: Path) -> list[str]:
             """Format directory contents in non-recursive mode."""
             try:
                 items = sorted(
@@ -204,11 +211,11 @@ class FileSystemTool:
 
             lines = []
             for idx, item in enumerate(items, 1):
-                lines.append(f"{idx} {_format_item(item)}")
+                lines.append(f"{idx} {format_item(item)}")
 
             return lines
 
-        def _format_items_recursive(
+        def format_items_recursive(
             directory: Path,
             prefix: str,
             indent: int,
@@ -245,9 +252,9 @@ class FileSystemTool:
             for idx, item in enumerate(items, 1):
                 current_prefix = f"{prefix}{idx}" if prefix else str(idx)
 
-                lines.append(f"{indent_str}{current_prefix} {_format_item(item)}")
+                lines.append(f"{indent_str}{current_prefix} {format_item(item)}")
                 if item.is_dir():
-                    lines.extend(_format_items_recursive(
+                    lines.extend(format_items_recursive(
                         item,
                         f"{current_prefix}.",
                         indent + 1,
@@ -270,8 +277,134 @@ class FileSystemTool:
         result_lines = [f"Directory: {path}"]
 
         if recursive:
-            result_lines.extend(_format_items_recursive(abs_path, "", 0, 1, max_depth))
+            result_lines.extend(format_items_recursive(abs_path, "", 0, 1, max_depth))
         else:
-            result_lines.extend(_format_items_flat(abs_path))
+            result_lines.extend(format_items_flat(abs_path))
 
         return "\n".join(result_lines)
+
+    def write_file(self, path: str, content: str) -> str:
+        """
+        Request to write content to a file at the specified path.
+        Use this when you need to create a new file or overwrite an existing file with new content.
+        **WARNING**: It will raise an error when overwriting existing files that are not read before.
+
+        Args:
+            path: (required) The path of the file to write (relative to the current working directory).
+            content: (required) The content to write to the file.
+
+        Returns:
+            A success message if the file was written successfully.
+
+        Examples:
+            >>> write_file("test.txt", "Hello World!")
+            File written successfully.
+        """
+        abs_path = Path(self.cwd) / path
+
+        if abs_path.exists() and str(abs_path) not in self._read_file_set:
+            raise PermissionError(f"File already exists and was not read before: {path}")
+
+        abs_path.parent.mkdir(parents=True, exist_ok=True)
+        abs_path.write_text(content, encoding="utf-8")
+        return "File written successfully."
+
+    def edit_file(self, path: str, old_content: str, new_content: str) -> str:
+        """
+        Request to edit the content of a file at the specified path.
+        Use this when you need to edit an existing file with existing content you have read before.
+        If the passed in old_content does not match the actual content or match in multiple places, it will raise an error.
+
+        Args:
+            path: (required) The path of the file to edit (relative to the current working directory).
+            old_content: (required) The old content to replace.
+            new_content: (required) The new content to replace with.
+
+        Returns:
+            The diff of the old content and the new content.
+        """
+
+        def generate_diff(old_content: str, new_content: str, file_name: str) -> str:
+            diff = difflib.unified_diff(
+                old_content.splitlines(),
+                new_content.splitlines(),
+                fromfile=f"a/{file_name}",
+                tofile=f"b/{file_name}",
+            )
+            return "\n".join(diff)
+
+        abs_path = Path(self.cwd) / path
+
+        if not abs_path.exists():
+            raise FileNotFoundError(f"File not found at {path}")
+
+        with open(abs_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        count = content.count(old_content)
+        if count == 0:
+            raise ValueError(f"Content not found in file: {path}")
+        if count > 1:
+            raise ValueError(f"Content found multiple times in file: {path}")
+
+        old_file_content = content
+        new_file_content = content.replace(old_content, new_content, 1)
+        abs_path.write_text(new_file_content, encoding="utf-8")
+        return generate_diff(old_file_content, new_file_content, path)
+
+    def delete(self, path: str) -> str:
+        """
+        Request to delete a file or directory at the specified path.
+
+        Args:
+            path: (required) The path of the file or directory to delete (relative to the current working directory).
+
+        Returns:
+            A success message if the target was deleted successfully.
+        """
+        abs_path = Path(self.cwd) / path
+
+        if not abs_path.exists():
+            raise FileNotFoundError(f"'{path}' not found.")
+
+        if abs_path.is_dir():
+            shutil.rmtree(abs_path)
+        else:
+            if str(abs_path) in self._read_file_set:
+                self._read_file_set.remove(str(abs_path))
+            abs_path.unlink()
+        return f"'{path}' deleted successfully."
+
+    def copy(self, src: str, dest: str) -> str:
+        """
+        Request to copy a file or directory from source to destination.
+
+        Behavior:
+        1. If `dest` does not exist: Copies `src` to `dest` (renaming it).
+        2. If `dest` exists and is a directory: Copies `src` INTO `dest` (keeping original filename).
+        3. If `dest` exists and is a file: Raises FileExistsError (to prevent accidental overwrite).
+
+        Args:
+            src: (required) The path of the source (relative to the current working directory).
+            dest: (required) The path of the destination (relative to the current working directory).
+
+        Returns:
+            A success message if the target was copied successfully.
+        """
+        src_path = Path(self.cwd) / src
+        dest_path = Path(self.cwd) / dest
+
+        if not src_path.exists():
+            raise FileNotFoundError(f"'{src}' not found.")
+
+        if dest_path.is_dir():
+            dest_path = dest_path / src_path.name
+
+        if dest_path.exists():
+            raise FileExistsError(f"Target '{dest_path.name}' already exists at destination. Copy aborted to prevent overwrite.")
+
+        if src_path.is_dir():
+            shutil.copytree(src_path, dest_path)
+        else:
+            shutil.copy2(src_path, dest_path)
+        return f"Successfully copied '{src}' to '{dest}'"
