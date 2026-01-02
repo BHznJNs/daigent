@@ -4,6 +4,7 @@ from .provider import LlmModelRead
 
 class AgentBase(DTOBase):
     name: str
+    icon_name: str
     system_prompt: str
 
 class AgentBrief(DTOBase):
@@ -19,5 +20,6 @@ class AgentCreate(AgentBase):
 
 class AgentUpdate(DTOBase):
     name: str | None = None
+    icon_name: str | None = None
     system_prompt: str | None = None
     model_id: int | None = None

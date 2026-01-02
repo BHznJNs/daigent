@@ -1,9 +1,4 @@
-import {
-  QueryErrorResetBoundary,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
-import { Suspense } from "react";
-import { ErrorBoundary } from "react-error-boundary";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { fetchAgentById } from "@/api/agent";
 import { FailedToLoad } from "@/components/FailedToLoad";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -12,6 +7,7 @@ import { AgentEdit } from "@/features/Tabs/AgentPanel/AgentEdit";
 import { useTabsStore } from "@/stores/tabs-store";
 import type { AgentTabMetadata } from "@/types/tab";
 import type { TabPanelProps } from "../index";
+import { TabPanelFrame } from "../TabPanelFrame";
 
 function AgentCreatePanel({ tabId }: { tabId: string }) {
   const { removeTab } = useTabsStore();
@@ -58,33 +54,22 @@ export function AgentPanel({
   }
 
   return (
-    <QueryErrorResetBoundary>
-      {({ reset }) => (
-        <ErrorBoundary
-          onReset={reset}
-          fallbackRender={({ resetErrorBoundary }) => (
-            <div className="flex h-full items-center justify-center p-4">
-              <FailedToLoad
-                refetch={resetErrorBoundary}
-                description="无法加载 Agent 信息，请稍后重试。"
-              />
-            </div>
-          )}
-        >
-          <Suspense
-            fallback={
-              <div className="flex h-full items-center justify-center p-4">
-                <p className="text-muted-foreground">加载中...</p>
-              </div>
-            }
-          >
-            <ScrollArea className="h-full px-8">
-              <AgentEditPanel tabId={tabId} agentId={metadata.id} />
-              <ScrollBar orientation="vertical" />
-            </ScrollArea>
-          </Suspense>
-        </ErrorBoundary>
+    <TabPanelFrame
+      fallbackChildren={
+        <div className="flex h-full items-center justify-center p-4">
+          <p className="text-muted-foreground">加载中...</p>
+        </div>
+      }
+      fallbackRender={({ resetErrorBoundary }) => (
+        <div className="flex h-full items-center justify-center p-4">
+          <FailedToLoad
+            refetch={resetErrorBoundary}
+            description="无法加载 Agent 信息，请稍后重试。"
+          />
+        </div>
       )}
-    </QueryErrorResetBoundary>
+    >
+      <AgentEditPanel tabId={tabId} agentId={metadata.id} />
+    </TabPanelFrame>
   );
 }

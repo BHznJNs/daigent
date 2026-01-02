@@ -1,4 +1,5 @@
 import enum
+import time
 from typing import Annotated
 from liteai_sdk import SystemMessage, UserMessage, AssistantMessage, ToolMessage
 from pydantic import Discriminator, TypeAdapter
@@ -27,6 +28,7 @@ class Task(Base):
     type: Mapped[TaskType]
     title: Mapped[str]
     messages: Mapped[list[TaskMessage]] = mapped_column(PydanticJSON(messages_adapter), default=list)
+    last_run_at: Mapped[int] = mapped_column(default=lambda: int(time.time()))
     agent_id: Mapped[int] = mapped_column(ForeignKey(Agent.id, ondelete="SET NULL"), nullable=True)
     agent = relationship("Agent", back_populates="tasks")
     workspace_id: Mapped[int] = mapped_column(ForeignKey(Workspace.id))

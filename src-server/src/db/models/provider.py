@@ -1,6 +1,6 @@
 import dataclasses
-from sqlalchemy import ForeignKey, event, select
-from sqlalchemy.orm import Mapped, mapped_column, relationship, sessionmaker
+from sqlalchemy import ForeignKey, select
+from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
 from liteai_sdk import LlmProviders
 from . import Base
 from .utils import DataClassJSON
@@ -30,9 +30,7 @@ class Provider(Base):
     api_key: Mapped[str]
     models = relationship("LlmModel", back_populates="provider", cascade="all, delete-orphan")
 
-@event.listens_for(Base.metadata, "after_create")
-def _insert_initial_values(target, connection, **kw):
-    Session = sessionmaker(bind=connection)
+def init(session: Session):
     default_provider = Provider(
         name="OpenAI",
         type=LlmProviders.OPENAI,
@@ -44,15 +42,13 @@ def _insert_initial_values(target, connection, **kw):
                 context_size=8192,
                 capability=LlmModelCapability())])
 
-    with Session() as session:
-        # check if there is any provider
-        stmt = select(Provider)
-        exists = session.execute(stmt).scalars().first()
-        if exists: return
+    stmt = select(Provider)
+    exists = session.execute(stmt).scalars().first()
+    if exists: return
 
-        try:
-            session.add(default_provider)
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            raise e
+    try:
+        session.add(default_provider)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e

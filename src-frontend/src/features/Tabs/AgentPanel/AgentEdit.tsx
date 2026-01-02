@@ -7,7 +7,7 @@ import { FieldItem } from "@/components/custom/item/FieldItem";
 import { Button } from "@/components/ui/button";
 import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { MinimalTiptapEditor } from "@/components/ui/minimal-tiptap";
 import { DEFAULT_AGENT } from "@/constants/agent";
 import { ModelSelectDialog } from "@/features/Tabs/AgentPanel/ModelSelectDialog";
 import type { AgentCreate, AgentRead, AgentUpdate } from "@/types/agent";
@@ -143,10 +143,10 @@ export function AgentEdit({ agent, onConfirm }: AgentEditProps) {
               fieldState={fieldState}
               className="mt-2 flex-col"
             >
-              <Textarea
+              <MinimalTiptapEditor
                 {...field}
-                placeholder="请输入Agent 提示"
-                className="min-h-[8em]"
+                className="mt-2"
+                editorClassName="min-h-[8em]"
               />
             </FieldItem>
           )}

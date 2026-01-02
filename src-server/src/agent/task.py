@@ -2,6 +2,7 @@ import asyncio
 import queue
 import threading
 from collections.abc import Generator
+import time
 from typing import Any, Literal, cast
 from loguru import logger
 from liteai_sdk import LLM, AssistantMessage, LlmRequestParams, MessageChunk,\
@@ -221,7 +222,10 @@ class AgentTask:
 
     def persist(self):
         with TaskService() as task_service:
-            task_service.update_task(self.task_id, {"messages": self._messages})
+            task_service.update_task(self.task_id, {
+                "messages": self._messages,
+                "last_run_at": int(time.time())
+            })
 
     def stop(self):
         with self._lock:

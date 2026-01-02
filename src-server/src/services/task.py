@@ -34,15 +34,7 @@ class TaskService(ServiceBase):
         offset = (page - 1) * per_page
         total_pages = (total + per_page - 1) // per_page if total > 0 else 0
 
-        stmt = base_query.options(
-            selectinload(task_models.Task.agent),
-            selectinload(task_models.Task.workspace),
-            load_only(task_models.Task.id,
-                      task_models.Task.type,
-                      task_models.Task.title,
-                      task_models.Task.agent_id,
-                      task_models.Task.workspace_id)
-        ).order_by(task_models.Task.id.desc()).limit(per_page).offset(offset)
+        stmt = base_query.order_by(task_models.Task.id.desc()).limit(per_page).offset(offset)
 
         tasks = self._db_session.execute(stmt).scalars().all()
 

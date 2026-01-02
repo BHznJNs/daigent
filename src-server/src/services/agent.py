@@ -23,10 +23,7 @@ class AgentService(ServiceBase):
         offset = (page - 1) * per_page
         total_pages = (total + per_page - 1) // per_page if total > 0 else 0
 
-        stmt = select(agent_models.Agent).options(
-            selectinload(agent_models.Agent.model),
-            selectinload(agent_models.Agent.workspaces)
-        ).limit(per_page).offset(offset)
+        stmt = select(agent_models.Agent).limit(per_page).offset(offset)
         agents = self._db_session.execute(stmt).scalars().all()
 
         return {

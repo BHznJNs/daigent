@@ -8,6 +8,7 @@ class TaskBase(DTOBase):
 
 class TaskRead(TaskBase):
     id: int
+    last_run_at: int
     agent_id: int | None = None
     workspace_id: int
 

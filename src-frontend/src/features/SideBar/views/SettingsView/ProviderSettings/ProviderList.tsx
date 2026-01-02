@@ -3,7 +3,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { PencilIcon, PlugIcon, TrashIcon } from "lucide-react";
+import { PencilIcon, TrashIcon } from "lucide-react";
 import { toast } from "sonner";
 import { deleteProvider, fetchProviders } from "@/api/provider";
 import { ConfirmDeleteDialog } from "@/components/custom/dialog/ConfirmDeteteDialog";
@@ -19,7 +19,6 @@ import {
   Item,
   ItemContent,
   ItemDescription,
-  ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
 import { PROVIDER_TYPE_LABELS } from "@/constants/provider";
@@ -132,9 +131,6 @@ function ProviderItem({ provider }: ProviderItemProps) {
       size="sm"
       className="flex flex-nowrap rounded-none border-t-0 border-r-0 border-l-0"
     >
-      <ItemMedia variant="icon">
-        <PlugIcon className="size-4" />
-      </ItemMedia>
       <ItemContent>
         <ItemTitle>
           {provider.name}
