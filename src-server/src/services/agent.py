@@ -11,6 +11,7 @@ class AgentNotFoundError(HTTPException): pass
 class AgentBrief(NamedTuple):
     id: int
     name: str
+    icon_name: str
 
 class AgentService(ServiceBase):
     def get_agents(self, page: int = 1, per_page: int = 10) -> dict:
@@ -35,9 +36,12 @@ class AgentService(ServiceBase):
         }
 
     def get_agents_brief(self) -> list[AgentBrief]:
-        stmt = select(agent_models.Agent.id, agent_models.Agent.name)
+        stmt = select(
+            agent_models.Agent.id,
+            agent_models.Agent.name,
+            agent_models.Agent.icon_name)
         agents = self._db_session.execute(stmt).all()
-        return [AgentBrief(id, name) for id, name in agents]
+        return [AgentBrief(id, name, icon_name) for id, name, icon_name in agents]
 
     def get_agent_by_id(self, id: int) -> agent_models.Agent | None:
         return self._db_session.get(

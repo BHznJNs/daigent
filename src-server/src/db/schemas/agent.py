@@ -10,6 +10,7 @@ class AgentBase(DTOBase):
 class AgentBrief(DTOBase):
     id: int
     name: str
+    icon_name: str
 
 class AgentRead(AgentBase):
     id: int

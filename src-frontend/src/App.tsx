@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/resizable";
 import { applyTheme } from "@/lib/applyTheme";
 import { useConfigStore } from "@/stores/config-store";
+import { TooltipProvider } from "./components/ui/tooltip";
 import { ActivityBar } from "./features/ActivityBar/ActivityBar";
 import { SideBar } from "./features/SideBar/SideBar";
 import { Tabs } from "./features/Tabs";
@@ -89,7 +90,11 @@ function App() {
 
   useEffect(() => applyTheme(theme), [theme]);
 
-  return <Layout />;
+  return (
+    <TooltipProvider>
+      <Layout />
+    </TooltipProvider>
+  );
 }
 
 export default App;

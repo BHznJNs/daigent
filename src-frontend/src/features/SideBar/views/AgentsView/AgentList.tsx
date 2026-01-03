@@ -3,7 +3,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { BotIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { PencilIcon, TrashIcon } from "lucide-react";
 import { toast } from "sonner";
 import { deleteAgent, fetchAgents } from "@/api/agent";
 import { ConfirmDeleteDialog } from "@/components/custom/dialog/ConfirmDeteteDialog";
@@ -19,7 +19,6 @@ import {
   ItemActions,
   ItemContent,
   ItemDescription,
-  ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -27,6 +26,7 @@ import { tabIdFactory } from "@/lib/tab";
 import { useTabsStore } from "@/stores/tabs-store";
 import type { AgentRead } from "@/types/agent";
 import type { AgentTabMetadata, Tab } from "@/types/tab";
+import { AgentAvatar } from "./AgentAvatar";
 
 function createAgentEditTab(agentId: number, agentName: string): Tab {
   return {
@@ -124,9 +124,8 @@ function AgentItem({ agent }: AgentItemProps) {
       size="sm"
       className="flex cursor-default flex-nowrap rounded-none border-t-0 border-r-0 border-l-0 hover:bg-accent/30"
     >
-      <ItemMedia variant="icon">
-        <BotIcon className="size-4" />
-      </ItemMedia>
+      <AgentAvatar name={agent.name} iconName={agent.icon_name} size={18} />
+
       <ItemContent>
         <ItemTitle>{agent.name}</ItemTitle>
         <ItemDescription>

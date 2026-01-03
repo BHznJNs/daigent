@@ -85,7 +85,7 @@ export function ActivityBar() {
     >
       <div className="flex flex-col items-center">
         {topViews.map(({ id, title, icon }) => (
-          <Tooltip key={id} delayDuration={600}>
+          <Tooltip key={id}>
             <TooltipTrigger asChild>
               <ActivityBarItem id={id} icon={icon} />
             </TooltipTrigger>

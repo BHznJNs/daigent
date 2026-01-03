@@ -58,7 +58,7 @@ export function SingleSelectDialog<Selection>({
       <DialogContent showCloseButton={false} className="p-0">
         <Command>
           <CommandInput placeholder={placeholder} />
-          <CommandList>
+          <CommandList className="shadcn-scroll">
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {selections.map((selection: Selection) => {
@@ -131,7 +131,7 @@ export function GroupedSingleSelectDialog<Selection>({
       <DialogContent showCloseButton={false} className="p-0">
         <Command>
           <CommandInput placeholder={placeholder} />
-          <CommandList>
+          <CommandList className="shadcn-scroll">
             <CommandEmpty>{emptyText}</CommandEmpty>
             {groups.map((group, groupIndex) => (
               <div key={group.heading}>

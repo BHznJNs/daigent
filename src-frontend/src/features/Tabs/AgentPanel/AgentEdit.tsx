@@ -12,6 +12,7 @@ import { DEFAULT_AGENT } from "@/constants/agent";
 import { ModelSelectDialog } from "@/features/Tabs/AgentPanel/ModelSelectDialog";
 import type { AgentCreate, AgentRead, AgentUpdate } from "@/types/agent";
 import type { LlmModelRead } from "@/types/provider";
+import { type IconName, IconSelectDialog } from "./IconSelectDialog";
 
 type AgentEditProps = {
   agent: AgentRead | AgentCreate;
@@ -82,6 +83,7 @@ export function AgentEdit({ agent, onConfirm }: AgentEditProps) {
   useEffect(() => {
     reset({
       name: agent.name,
+      icon_name: agent.icon_name,
       system_prompt: agent.system_prompt,
       model_id: initialModelId,
     });
@@ -109,6 +111,19 @@ export function AgentEdit({ agent, onConfirm }: AgentEditProps) {
           render={({ field, fieldState }) => (
             <FieldItem title="名称" fieldState={fieldState}>
               <Input {...field} placeholder="请输入 Agent 名称" />
+            </FieldItem>
+          )}
+        />
+
+        <Controller
+          name="icon_name"
+          control={control}
+          render={({ field, fieldState }) => (
+            <FieldItem title="图标" fieldState={fieldState}>
+              <IconSelectDialog
+                value={field.value as IconName}
+                onChange={field.onChange}
+              />
             </FieldItem>
           )}
         />
